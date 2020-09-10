@@ -1,5 +1,10 @@
 import * as Meeco from '@meeco/sdk';
+import { Keypair, KeypairResponse } from '@meeco/keystore-api-sdk';
+import * as cryppo from '@meeco/cryppo';
 import * as m from 'mithril';
+
+// import "./styles.scss";
+
 
 import TemplateSchemaStore from './TemplateSchemaStore.js';
 // import JSONComponent from './JSONComponent.js';
@@ -8,12 +13,12 @@ const USER_AUTH_DATA = 'user_auth_data';
 
 const environment = {
   vault: {
-    url: 'http://localhost:3000',
-    subscription_key: '',
+    url: 'https://sandbox.meeco.me/vault',
+    subscription_key: '6d8c99536aa647a49d326e5ba3b99bf5',
   },
   keystore: {
-    url: 'http://localhost:4000',
-    subscription_key: '',
+    url: 'https://sandbox.meeco.me/keystore',
+    subscription_key: '6d8c99536aa647a49d326e5ba3b99bf5',
   }
 };
 
@@ -55,7 +60,7 @@ let APIs = {
   init: function (): void {
     if (!App.authToken) return null;
 
-    APIs.templates = new TemplateSchemaStore(environment.vault.url, App.authToken);
+    // APIs.templates = new TemplateSchemaStore(environment.vault.url, App.authToken);
     // let userVault = APIs.vaultFactory({vault_access_token: App.authToken});
     // APIs.ItemTemplateAPI = userVault.ItemTemplateApi;
     // APIs.ItemAPI = userVault.ItemApi;
@@ -67,7 +72,7 @@ let APIs = {
 // APIs.init();
 
 function LoginComponent() {
-  let secret = "1.4aBdw1.AtxrZT-djUP1v-6pHT4H-gupF8g-t86D62-2mJbPm-fffkF9-zj";
+  let secret = "1.xB2dP9.7JXpPj-qocZLf-MjT1XN-ULtA8H-8szT1f-SQz4U1-LifbZ6-ff";
   let pass = '';
 
   return {
@@ -136,61 +141,59 @@ function LoginComponent() {
 //   return newItem;
 // }
 
-// async function connectHandler() {
-//   //create connection, if not exist
-//   //really just accepts the invitation...
+async function connectHandler(invitationToken: string) {
+  //create connection, if not exist
+  //really just accepts the invitation...
 
-//   // make keypair if not exists
-//   const api = Meeco.keystoreAPIFactory(environment).KeypairApi;
-//   const keyId = 'dog';
-//   let keyResult;
+  // make keypair if not exists
+  const api = Meeco.keystoreAPIFactory(environment)(AuthData).KeypairApi
+  const keyId = 'dog';
 
-//   try {
-//     const k = await api.keypairsExternalIdExternalIdGet(keyId).then(r => r.keypair);
-//     //then decrypt key
+  let keyPair: Keypair;
 
+  try {
+    keyPair = await m.request({
+      method: 'GET',
+      url: environment.keystore.url + '/keypairs/external_id/' + keyId,
+      headers: { 'Authorization': 'Bearer ' + AuthData.keystore_access_token },
+    }).then((r: KeypairResponse) => {
+      return r.keypair;
+    });
+  } catch (e) {
+    // TODO does it return an empty response or a 404?
+    console.log('creating a key for connection');
 
-//   } catch (e) {
-//     // TODO does it return an empty response or a 404?
-//   //else
-//     const keyPair = await this.cryppo.generateRSAKeyPair();
+    const keyPairUn = await cryppo.generateRSAKeyPair();
 
-//     const toPrivateKeyEncrypted = await this.cryppo.encryptWithKey({
-//       data: keyPair.privateKey,
-//       key: user.key_encryption_key.key,
-//       strategy: this.cryppo.CipherStrategy.AES_GCM,
-//     });
+    keyPair = await cryppo.encryptWithKey({
+      data: keyPairUn.privateKey,
+      key: AuthData.key_encryption_key.key,
+      strategy: cryppo.CipherStrategy.AES_GCM,
+    }).then(privateKeyEncrypted =>
+      api.keypairsPost({
+        public_key: keyPairUn.publicKey,
+        encrypted_serialized_key: privateKeyEncrypted.serialized,
+        // API will 500 without
+        metadata: {},
+        external_identifiers: [],
+      }))
+      .then(result => {
+        return result.keypair;
+      });
+  }
 
-//     const keystoreStoredKeyPair = await this.keystoreApiFactory(user)
-//       .KeypairApi.keypairsPost({
-//         public_key: keyPair.publicKey,
-//         encrypted_serialized_key: toPrivateKeyEncrypted.serialized,
-//         // API will 500 without
-//         metadata: {},
-//         external_identifiers: [],
-//       })
-//       .then(result => result.keypair);
-
-//   // const keyPair = {
-//   //     keyPair,
-//   //     keystoreStoredKeyPair,
-//   //   };
-//   }
-
-//   return await App.vaultFactory
-
-//     .ConnectionApi.connectionsPost({
-//       public_key: {
-//         keypair_external_id: keyPair.keystoreStoredKeyPair.id,
-//         public_key: keyPair.keyPair.publicKey,
-//       },
-//       connection: {
-//         encrypted_recipient_name: encryptedName,
-//         invitation_token: invitationToken,
-//       },
-//     })
-//     .then(res => res.connection);
-// }
+  return await Meeco.vaultAPIFactory(environment)(AuthData).ConnectionApi.connectionsPost({
+      public_key: {
+        keypair_external_id: keyPair.external_identifiers[0],
+        public_key: keyPair.public_key,
+      },
+      connection: {
+        encrypted_recipient_name: 'nothing here',
+        invitation_token: invitationToken,
+      },
+    })
+    .then(res => res.connection);
+}
 
 // function getInvite() {
 //   // this is done serverside before drawing the thing
@@ -221,17 +224,22 @@ window.onload = () => {
 
   m.mount(document.getElementById('auth'), LoginComponent);
 
-  // Get Invite
-  let inviteToken = document.getElementById('ad-target').attributes.getNamedItem('data-meeco-invite').value;
-
   document.getElementById('ad-target').onclick = () => {
     alert('I send connect request!');
+    // Get Invite
+    const inviteToken = document.getElementById('ad-target').attributes.getNamedItem('data-meeco-invite').value;
+
+    let connection = connectHandler(inviteToken).then(c => {
     // get back recipient_id
+      console.log(c);
+      return c;
+    });
+    // let recipient = connection.user_id;
     // also some form_id for 'next_steps'
   };
 
-  // let fieldNames = [];
-  // document.querySelectorAll('#test-form input').forEach(x => fieldNames.push(x.name));
+  let fieldNames = [];
+  document.querySelectorAll('#test-form input').forEach((x: any) => fieldNames.push(x.name));
 
   // APIs.templates.loadTemplates().then(() => {
   //   console.log('creating template');
