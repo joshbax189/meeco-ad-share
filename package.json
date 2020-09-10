@@ -20,12 +20,15 @@
     "webpack-cli": "^3.3.12"
   },
   "devDependencies": {
+    "@types/mithril": "^2.0.3",
+    "@types/source-map": "^0.5.2",
     "copy-webpack-plugin": "^6.0.3",
     "dotenv-webpack": "^2.0.0",
     "file-loader": "^6.0.0",
     "html-webpack-plugin": "^4.3.0",
     "sass": "^1.26.10",
-    "ts-loader": "^8.0.1",
+    "source-map": "^0.7.3",
+    "ts-loader": "^8.0.3",
     "typescript": "^3.9.7",
     "webpack": "^4.44.0",
     "webpack-dev-server": "^3.11.0"
