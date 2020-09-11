@@ -4,6 +4,9 @@ import { Connection } from '@meeco/vault-api-sdk';
 import * as cryppo from '@meeco/cryppo';
 import * as m from 'mithril';
 
+import environment from '../environment';
+import { serviceUserAuth, servicePublicKey } from '../serviceUser';
+
 import { TemplateSchemaStore, ItemTemplate } from './TemplateSchemaStore';
 // import JSONComponent from './JSONComponent.js';
 
@@ -302,21 +305,8 @@ window.onload = () => {
 
   m.mount(document.getElementById('auth'), LoginComponent);
 
-  // createInvite(ServiceUserAuth.vault_access_token, ServiceUserAuth.keystore_access_token, 'funny_hat', 'fake-name');
-//   createInviteFromKey(ServiceUserAuth.vault_access_token, '-----BEGIN PUBLIC KEY-----\
-// MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEA1eprH/3l2nwWGRASsdMP\
-// V7TLOKR0+F1aKcTW3IUXKsdDUqYnTxdCdgKCfl4UCUzQot3IuxwNx6fQAa/SWlB+\
-// tNlJXvWZcJ3bkXuys5HAnMut6z5d3sa08lFS5FXCV1KajHCRZEhe5mn77MknHl1+\
-// hx7zsjXQ4b7YlzWGmPUdotTDG3HYgceAr4hOClDxgBmkMAIXGFGq9qXR1J4dHlJQ\
-// 5u7poge+kWazM7jjctdkiuC4eH87znb8jijl8lHpqsDyT/F7oMChWonNgDHKHgnY\
-// Mrn1A15h6I80hqzHgdwPuiV+pbi2E3ggfVR7TF2W4gR+6GCbBuvUg2O0Z0KInjfJ\
-// +AOIz2zfIezKBh3WzS45GBy8LK1BFvqEkxVzivd5AaPlTHfu7PlGVPiRERpSkA5H\
-// vvyVxK6jjt50vjtiaOUfwVhX/CxFn5u5g+LZJk6nCAxl6zSx7bLAnSIocTAhoqLr\
-// aJ2Xju0qNpyutjFUtIkWnbpWgpXHOzTeVuPPTZVCkaEkuCPfzyBVaiLMvyS/bMd0\
-// bpUbYJxuNsRrcZ/O1pzMDivFBGq8vu+X+xCG/d3TSk8a+2hiejb9Km+TMVZGiZIF\
-// +dzTnxp5mn2GjfXxV57oU2cNjheM9qklEPUpmv+dxfX2kj5RsqPCadzs+Th/4ndl\
-// Czfb6M8JtF3lQjpjp6cfNk8CAwEAAQ==\
-// -----END PUBLIC KEY-----', 'funny_hat', 'Aes256Gcm.6xtPqA==.LS0tCml2OiAhYmluYXJ5IHwtCiAgWG9mS2U1WTBodmJPbVlrRAphdDogIWJpbmFyeSB8LQogIGErMi95SXZ2dnBMQytmeVdmYjVWekE9PQphZDogbm9uZQo=');
+  // createInvite(serviceUserAuth.vault_access_token, serviceUserAuth.keystore_access_token, 'funny_hat', 'fake-name');
+//   createInviteFromKey(serviceUserAuth.vault_access_token, servicePublicKey, 'funny_hat', 'Aes256Gcm.6xtPqA==.LS0tCml2OiAhYmluYXJ5IHwtCiAgWG9mS2U1WTBodmJPbVlrRAphdDogIWJpbmFyeSB8LQogIGErMi95SXZ2dnBMQytmeVdmYjVWekE9PQphZDogbm9uZQo=');
 
   document.getElementById('ad-target').onclick = () => {
     alert('I send connect request!');
