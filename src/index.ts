@@ -80,14 +80,14 @@ function LoginComponent() {
 
   return {
     view: () =>
-          m('form', { onsubmit: (e: any) => {
+          m('form.pure-form', { onsubmit: (e: any) => {
               e.preventDefault();
               App.login(secret, pass);
           }}, [
               m('input', { type: "text", placeholder: "secret", value: secret, oninput: (e: any) => secret = e.target.value }),
               m('input', { type: "password", oninput: (e: any) => pass = e.target.value }),
-              m('button[type="submit"]', 'Login'),
-              m('button', { onclick: () => App.logout() }, 'Logout'),
+              m('button[type="submit"].pure-button', 'Login'),
+              m('button.pure-button', { onclick: () => App.logout() }, 'Logout'),
               m('input', { type: "text", placeholder: "Token", value: App.authToken, oninput: (e: any) => App.authToken = e.target.value }),
           ])
   };
