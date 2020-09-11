@@ -8,20 +8,9 @@ import environment from '../environment';
 import { serviceUserAuth, servicePublicKey } from '../serviceUser';
 
 import { TemplateSchemaStore, ItemTemplate } from './TemplateSchemaStore';
-// import JSONComponent from './JSONComponent.js';
+import JSONComponent from './JSONComponent.js';
 
 const USER_AUTH_DATA = 'user_auth_data';
-
-const environment = {
-  vault: {
-    url: 'https://sandbox.meeco.me/vault',
-    subscription_key: '6d8c99536aa647a49d326e5ba3b99bf5',
-  },
-  keystore: {
-    url: 'https://sandbox.meeco.me/keystore',
-    subscription_key: '6d8c99536aa647a49d326e5ba3b99bf5',
-  }
-};
 
 // Active user's AuthData from SessionStorage.
 let AuthData = JSON.parse(sessionStorage.getItem(USER_AUTH_DATA) || '{}');
@@ -112,48 +101,47 @@ function makeFormTemplate(formId: string): Promise<ItemTemplate> {
   });
 }
 
+function collectSlotData(): Array<any> {
+  let fields = [];
+  document.querySelectorAll('#test-form input').forEach((x: Element) => fields.push({name: x.nodeName, value: x.nodeValue}));
+  return fields;
+}
+
 // Does Item Exist? How to lookup? What if multiple?
-// function lookupItem(templateId) {
-//     return m.request({
-//       method: 'GET',
-//       url: environment.vault.url + '/items?template_ids=' + templateId,
-//       headers: { 'Authorization': 'Bearer ' + App.authToken }
-//     }).then(data => {
-//       console.log('found items');
-//       console.log(data.items);
-//       return data.items;
-//     });
-// }
+function lookupItem(templateId: string) {
+    return m.request({
+      method: 'GET',
+      url: environment.vault.url + '/items?template_ids=' + templateId,
+      headers: { 'Authorization': 'Bearer ' + AuthData.vault_access_token,
+                 'Meeco-Subscription-Key': environment.vault.subscription_key }
+    }).then((data: any) => {
+      console.log('found items');
+      console.log(data.items);
+      return data.items;
+    });
+}
 
-// function collectSlotData() {
-//   let fields = [];
-//   document.querySelectorAll('#test-form input').forEach(x => fields.push({name: x.name, value: x.value}));
-//   return fields;
-// }
-
-// No: create
-// async function createItem(templateName, itemData) {
-//   // TODO
-//   let newItemResponse = await Promise.all(itemData.map(function (slot) {
-//     return APIs.ItemService.encryptSlot(slot, App.userDEK);
-//   })).then(slots_attributes =>
-//     m.request({
-//       method: 'POST',
-//       url: environment.vault.url + '/items?next_page_after=123',
-//       headers: { 'Authorization': 'Bearer ' + App.authToken },
-//       body:{
-//         template_name: templateName,
-//         item: {
-//           label: 'Auto label',
-//           slots_attributes: slots_attributes
-//         }
-//       }
-//     }));
-
-//   let newItem = newItemResponse.item;
-//   return newItem;
-// }
+// TODO
 async function createItem(templateName: string, itemData: any[]) {
+  let newItemResponse = await Promise.all(itemData.map((slot) => {
+    return APIs.ItemService.encryptSlot(slot, App.userDEK);
+  })).then(slots_attributes =>
+    m.request({
+      method: 'POST',
+      url: environment.vault.url + '/items',
+      headers: { 'Authorization': 'Bearer ' + App.authToken },
+      body:{
+        template_name: templateName,
+        item: {
+          label: 'Auto label',
+          slots_attributes: slots_attributes
+        }
+      }
+    }));
+
+  let newItem = newItemResponse.item;
+  return newItem;
+}
 
 async function connectHandler(invitationToken: string): Promise<Connection> {
   //create connection, if not exist
