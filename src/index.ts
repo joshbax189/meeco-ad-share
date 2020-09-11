@@ -60,7 +60,7 @@ let APIs = {
   init: function (): void {
     if (!App.authToken) return null;
 
-    //APIs.templates = new TemplateSchemaStore(environment.vault.url, App.authToken, environment.vault.subscription_key);
+    APIs.templates = new TemplateSchemaStore(environment.vault.url, App.authToken, environment.vault.subscription_key);
     // let userVault = APIs.vaultFactory({vault_access_token: App.authToken});
     // APIs.ItemTemplateAPI = userVault.ItemTemplateApi;
     // APIs.ItemAPI = userVault.ItemApi;
@@ -69,7 +69,10 @@ let APIs = {
   },
 };
 
-// APIs.init();
+function makeAuthHeaders(token: string) {
+  return { 'Authorization': 'Bearer ' + token,
+           'Meeco-Subscription-Key': environment.keystore.subscription_key };
+}
 
 function LoginComponent() {
   let secret = "1.xB2dP9.7JXpPj-qocZLf-MjT1XN-ULtA8H-8szT1f-SQz4U1-LifbZ6-ff";
@@ -148,13 +151,13 @@ function makeFormTemplate(formId: string): Promise<ItemTemplate> {
 //   let newItem = newItemResponse.item;
 //   return newItem;
 // }
+async function createItem(templateName: string, itemData: any[]) {
 
-async function connectHandler(invitationToken: string) {
+async function connectHandler(invitationToken: string): Promise<Connection> {
   //create connection, if not exist
   //really just accepts the invitation...
 
-  // make keypair if not exists
-  const api = Meeco.keystoreAPIFactory(environment)(AuthData).KeypairApi
+  // const api = Meeco.keystoreAPIFactory(environment)(AuthData).KeypairApi
   const keyId = 'dog';
 
   let keyPair: Keypair;
@@ -163,12 +166,13 @@ async function connectHandler(invitationToken: string) {
     keyPair = await m.request({
       method: 'GET',
       url: environment.keystore.url + '/keypairs/external_id/' + keyId,
-      headers: { 'Authorization': 'Bearer ' + AuthData.keystore_access_token },
+      headers: makeAuthHeaders(AuthData.keystore_access_token),
     }).then((r: KeypairResponse) => {
+      console.log('Got KP response');
       return r.keypair;
     });
   } catch (e) {
-    // TODO does it return an empty response or a 404?
+    // TODO check it's really a 404
     console.log('creating a key for connection');
 
     const keyPairUn = await cryppo.generateRSAKeyPair();
@@ -178,18 +182,32 @@ async function connectHandler(invitationToken: string) {
       key: AuthData.key_encryption_key.key,
       strategy: cryppo.CipherStrategy.AES_GCM,
     }).then(privateKeyEncrypted =>
-      api.keypairsPost({
+      // api.keypairsPost({
+      //   public_key: keyPairUn.publicKey,
+      //   encrypted_serialized_key: privateKeyEncrypted.serialized,
+      //   // API will 500 without
+      //   metadata: {},
+      //   // TODO this is for the v1 sandbox
+      //   external_identifiers: (environment.keystore.subscription_key ? keyId : [keyId]),
+      // })
+      m.request({
+        method: 'POST',
+        url: environment.keystore.url + '/keypairs',
+        headers: makeAuthHeaders(AuthData.keystore_access_token),
+        body: {
         public_key: keyPairUn.publicKey,
         encrypted_serialized_key: privateKeyEncrypted.serialized,
         // API will 500 without
         metadata: {},
-        external_identifiers: [],
+          external_identifiers: [keyId],
+        }
       }))
-      .then(result => {
+      .then((result: KeypairResponse) => {
         return result.keypair;
       });
   }
 
+  // TODO cannot establish a connection...
   return await Meeco.vaultAPIFactory(environment)(AuthData).ConnectionApi.connectionsPost({
       public_key: {
         keypair_external_id: keyPair.external_identifiers[0],
