@@ -21,11 +21,12 @@ const environment = {
   }
 };
 
+// Active user's AuthData from SessionStorage.
 let AuthData = JSON.parse(sessionStorage.getItem(USER_AUTH_DATA) || '{}');
 if (AuthData.data_encryption_key) {
-  AuthData.data_encryption_key = Meeco.EncryptionKey.fromRaw(AuthData.data_encryption_key);
-  AuthData.key_encryption_key = Meeco.EncryptionKey.fromRaw(AuthData.key_encryption_key);
-  AuthData.passphrase_derived_key = Meeco.EncryptionKey.fromRaw(AuthData.passphrase_derived_key);
+  AuthData.data_encryption_key = Meeco.EncryptionKey.fromSerialized(AuthData.data_encryption_key);
+  AuthData.key_encryption_key = Meeco.EncryptionKey.fromSerialized(AuthData.key_encryption_key);
+  AuthData.passphrase_derived_key = Meeco.EncryptionKey.fromSerialized(AuthData.passphrase_derived_key);
 }
 
 let App = {
