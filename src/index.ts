@@ -1,7 +1,7 @@
 import * as Meeco from '@meeco/sdk';
-import { Keypair, KeypairResponse } from '@meeco/keystore-api-sdk';
-import { Connection } from '@meeco/vault-api-sdk';
-import * as cryppo from '@meeco/cryppo';
+//import { Keypair, KeypairResponse } from '@meeco/keystore-api-sdk';
+import { Connection, Item } from '@meeco/vault-api-sdk';
+//import * as cryppo from '@meeco/cryppo';
 import * as m from 'mithril';
 
 import environment from '../environment';
@@ -9,6 +9,8 @@ import { serviceUserAuth, servicePublicKey } from '../serviceUser';
 
 import { TemplateSchemaStore, ItemTemplate } from './TemplateSchemaStore';
 import JSONComponent from './JSONComponent.js';
+import API from './API';
+import { FakeAPI } from './FakeAPI';
 
 const USER_AUTH_DATA = 'user_auth_data';
 
@@ -42,6 +44,11 @@ let App = {
     App.userDEK = '';
   },
 };
+
+// Default load
+if (AuthData.vault_access_token) {
+  App.templates = new TemplateSchemaStore(environment.vault.url, AuthData.vault_access_token, environment.vault.subscription_key);
+}
 
 function makeAuthHeaders(token: string) {
   return { 'Authorization': 'Bearer ' + token,
@@ -90,96 +97,8 @@ function collectSlotData(): Array<any> {
   return fields;
 }
 
-// Does Item Exist? How to lookup? What if multiple?
-function lookupItem(templateId: string) {
-    return m.request({
-      method: 'GET',
-      url: environment.vault.url + '/items?template_ids=' + templateId,
-      headers: { 'Authorization': 'Bearer ' + AuthData.vault_access_token,
-                 'Meeco-Subscription-Key': environment.vault.subscription_key }
-    }).then((data: any) => {
-      console.log('found items');
-      console.log(data.items);
-      return data.items;
-    });
-}
-
-// TODO
-async function createItem(templateName: string, itemData: any[]) {
-  const service = new Meeco.ItemService(environment);
-  let newItemResponse = await Promise.all(itemData.map((slot) => {
-    return service.encryptSlot(slot, App.userDEK);
-  })).then(slots_attributes =>
-    m.request({
-      method: 'POST',
-      url: environment.vault.url + '/items',
-      headers: { 'Authorization': 'Bearer ' + App.authToken },
-      body:{
-        template_name: templateName,
-        item: {
-          label: 'Auto label',
-          slots_attributes: slots_attributes
-        }
-      }
-    }));
-
-  let newItem = newItemResponse.item;
-  return newItem;
-}
-
-async function connectHandler(invitationToken: string): Promise<Connection> {
-  //create connection, if not exist
-  //really just accepts the invitation...
-
-  // const api = Meeco.keystoreAPIFactory(environment)(AuthData).KeypairApi
-  const keyId = 'dog';
-
-  let keyPair: Keypair;
-
-  try {
-    keyPair = await m.request({
-      method: 'GET',
-      url: environment.keystore.url + '/keypairs/external_id/' + keyId,
-      headers: makeAuthHeaders(AuthData.keystore_access_token),
-    }).then((r: KeypairResponse) => {
-      console.log('Got KP response');
-      return r.keypair;
-    });
-  } catch (e) {
-    // TODO check it's really a 404
-    console.log('creating a key for connection');
-
-    const keyPairUn = await cryppo.generateRSAKeyPair();
-
-    keyPair = await cryppo.encryptWithKey({
-      data: keyPairUn.privateKey,
-      key: AuthData.key_encryption_key.key,
-      strategy: cryppo.CipherStrategy.AES_GCM,
-    }).then(privateKeyEncrypted =>
-      // api.keypairsPost({
-      //   public_key: keyPairUn.publicKey,
-      //   encrypted_serialized_key: privateKeyEncrypted.serialized,
-      //   // API will 500 without
-      //   metadata: {},
-      //   // TODO this is for the v1 sandbox
-      //   external_identifiers: (environment.keystore.subscription_key ? keyId : [keyId]),
-      // })
-      m.request({
-        method: 'POST',
-        url: environment.keystore.url + '/keypairs',
-        headers: makeAuthHeaders(AuthData.keystore_access_token),
-        body: {
-        public_key: keyPairUn.publicKey,
-        encrypted_serialized_key: privateKeyEncrypted.serialized,
-        // API will 500 without
-        metadata: {},
-          external_identifiers: [keyId],
-        }
-      }))
-      .then((result: KeypairResponse) => {
-        return result.keypair;
-      });
-  }
+async function connectHandler(invitationToken: string, api: API): Promise<Connection> {
+  const keyPair = await api.getOrCreateKeyPair('dog', AuthData.key_encryption_key.key, AuthData.keystore_access_token);
 
   // TODO cannot establish a connection...
   return await Meeco.vaultAPIFactory(environment)(AuthData).ConnectionApi.connectionsPost({
@@ -195,95 +114,22 @@ async function connectHandler(invitationToken: string): Promise<Connection> {
     .then(res => res.connection);
 }
 
-async function createKeyPair(keyId: string, keystore_token: string) {
-    console.log('creating a key for connection');
-
-    const keyPairUn = await cryppo.generateRSAKeyPair();
-
-    return cryppo.encryptWithKey({
-      data: keyPairUn.privateKey,
-      key: AuthData.key_encryption_key.key,
-      strategy: cryppo.CipherStrategy.AES_GCM,
-    }).then(privateKeyEncrypted =>
-      m.request({
-        method: 'POST',
-        url: environment.keystore.url + '/keypairs',
-        headers: makeAuthHeaders(keystore_token),
-        body: {
-        public_key: keyPairUn.publicKey,
-        encrypted_serialized_key: privateKeyEncrypted.serialized,
-        // API will 500 without
-        metadata: {},
-          external_identifiers: [keyId],
-        }
-      }))
-      .then((result: KeypairResponse) => {
-        console.log(result.keypair);
-        return result.keypair;
-      });
-}
-
-async function createInvite(vaultToken: string, keystoreToken: string, keyPairId: string, encryptedName: string) {
-  // for other-user:
-  const keyPair = await createKeyPair(keyPairId, keystoreToken);
-
-  console.log('creating invite');
-  return Meeco.vaultAPIFactory(environment)(vaultToken)
-      .InvitationApi.invitationsPost({
-        public_key: {
-          keypair_external_id: keyPairId,
-          public_key: keyPair.public_key,
-        },
-        invitation: {
-          encrypted_recipient_name: encryptedName,
-        },
-      })
-    .then(result => {
-      console.log(result.invitation);
-      return result.invitation;
-    });
-}
-
-async function createInviteFromKey(vaultToken: string, publicKey: string, keyPairId: string, encryptedName: string) {
-  console.log('creating invite');
-  return m.request({
-    method: 'POST',
-    url: environment.vault.url + '/invitations',
-    headers: makeAuthHeaders(vaultToken),
-    body: {
-        public_key: {
-          // keypair_external_id: keyPairId,
-          keypair_id: '8a3abe43-2c35-4ad4-9075-80a1aef763ba',
-          encryption_strategy: 'Aes256Gcm',
-          public_key: publicKey,
-        },
-        invitation: {
-          encrypted_recipient_name: encryptedName,
-          message: 'hi mom',
-          email: 'fake@gmail.com'
-        },
-    }
-  }).then((result: any) => {
-      console.log(result.invitation);
-      return result.invitation;
-    });
-}
-
-
 window.onload = () => {
   document.getElementById('test-form').hidden = true;
 
   m.mount(document.getElementById('auth'), LoginComponent);
 
-  // createInvite(serviceUserAuth.vault_access_token, serviceUserAuth.keystore_access_token, 'funny_hat', 'fake-name');
-//   createInviteFromKey(serviceUserAuth.vault_access_token, servicePublicKey, 'funny_hat', 'Aes256Gcm.6xtPqA==.LS0tCml2OiAhYmluYXJ5IHwtCiAgWG9mS2U1WTBodmJPbVlrRAphdDogIWJpbmFyeSB8LQogIGErMi95SXZ2dnBMQytmeVdmYjVWekE9PQphZDogbm9uZQo=');
+  const api = new API(environment);
+
+  // api.createInvite(serviceUserAuth.vault_access_token, serviceUserAuth.keystore_access_token, 'funny_hat', 'fake-name');
+//   api.createInviteFromKey(serviceUserAuth.vault_access_token, servicePublicKey, 'funny_hat', 'Aes256Gcm.6xtPqA==.LS0tCml2OiAhYmluYXJ5IHwtCiAgWG9mS2U1WTBodmJPbVlrRAphdDogIWJpbmFyeSB8LQogIGErMi95SXZ2dnBMQytmeVdmYjVWekE9PQphZDogbm9uZQo=');
 
   document.getElementById('ad-target').onclick = () => {
     alert('I send connect request!');
     // Get Invite
     const inviteToken = document.getElementById('ad-target').attributes.getNamedItem('data-meeco-invite').value;
 
-    // let connection = connectHandler(inviteToken).then(c => {
+    // let connection = connectHandler(inviteToken, api).then(c => {
     //   // get back recipient_id
     //   console.log('connection is');
     //   console.log(c);
@@ -304,7 +150,7 @@ window.onload = () => {
       let template = App.templates.getTemplateByName(templateName);
 
       // Items may exist!
-      lookupItem(template.id).then(existingItems => {
+      api.lookupItem(template.id, AuthData.vault_access_token).then(existingItems => {
 
         if (existingItems.length > 0) {
           console.log('autofill');
@@ -316,7 +162,7 @@ window.onload = () => {
           // TODO Create Connect
           // const service = Meeco.ConnectionService(environment).createConnection({from: _, to: _, options: _});
 
-          createItem(templateName, collectSlotData()).then(d => {
+          api.createItem(templateName, collectSlotData()).then(d => {
             console.log(d);
             m.mount(document.getElementById('item-output'), JSONComponent(d));
           });
