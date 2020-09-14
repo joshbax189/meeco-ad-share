@@ -136,6 +136,7 @@ export default class API {
     });
   }
 
+  // Can't use current SDK because of key_store_id requirement in SANDBOX
   async acceptInvite(vaultToken: string, invite: string, keyId: string, publicKey: string) {
     return m.request({
       method: 'POST',
@@ -184,6 +185,34 @@ export default class API {
 
     let newItem = newItemResponse.item;
     return newItem;
+  }
+
+  async shareItem(keys: Meeco.AuthData, connectionId: string, itemId: string, options?: any) {
+    const service = new Meeco.ShareService(this.environment);
+    return service.shareItem(keys, connectionId, itemId, options);
+  }
+
+  async getOrAcceptConnection(vaultToken: string, invite: string, keyId: string, publicKey: string, otherUserId: string) {
+    return m.request({
+      method: 'GET',
+      url: this.environment.vault.url + '/connections',
+      headers: this.makeAuthHeaders(vaultToken),
+    }).then((data: any) => {
+      let conn = data.connections.find(c => c.user_id == otherUserId);
+      if (!conn) {
+        return this.acceptInvite(vaultToken, invite, keyId, publicKey);
+      } else {
+        return conn;
+      }
+    });
+  }
+
+  async getShares(vaultToken: string) {
+    return m.request({
+      method: 'GET',
+      url: this.environment.vault.url + '/shares/outgoing',
+      headers: this.makeAuthHeaders(vaultToken),
+    }).then((data: any) => data.shares);
   }
 
   private makeAuthHeaders(token: string) {
