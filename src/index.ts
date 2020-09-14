@@ -3,8 +3,8 @@ import { Keypair } from '@meeco/keystore-api-sdk';
 import { Item } from '@meeco/vault-api-sdk';
 import * as m from 'mithril';
 
-import environment from '../environment';
-import { serviceUserAuth } from './serviceUser';
+import environment from './environment.js';
+import { serviceUserAuth, serviceUserId, serviceUserKeyId } from './serviceUser';
 
 import { TemplateSchemaStore, ItemTemplate } from './TemplateSchemaStore';
 import JSONComponent from './JSONComponent.js';
@@ -13,8 +13,6 @@ import API from './API';
 //import { FakeAPI } from './FakeAPI';
 
 const USER_AUTH_DATA = 'user_auth_data';
-
-const SERVICE_USER_ID = 'e8c2adbb-f4eb-4d35-8a01-aefe126f179b';
 
 // Active user's AuthData from SessionStorage.
 let AuthData = JSON.parse(sessionStorage.getItem(USER_AUTH_DATA) || '{}');
@@ -133,7 +131,7 @@ window.onload = () => {
   const api = new API(environment);
 
   // Generate an invite to accompany the form
-  const serviceExtKeyId = 'dog';
+  const serviceExtKeyId = serviceUserKeyId;
   let realInvite = '';
   api.getOrCreateKeyPair(serviceExtKeyId,
                          Meeco.EncryptionKey.fromSerialized(serviceUserAuth.key_encryption_key).key,
@@ -157,7 +155,7 @@ window.onload = () => {
     let connection = api.getOrCreateKeyPair(userKeyId, AuthData.key_encryption_key.key, AuthData.keystore_access_token)
       .then((userKeyPair: Keypair) =>
         api.getOrAcceptConnection(AuthData.vault_access_token, realInvite, userKeyPair.id,
-                                  userKeyPair.public_key, SERVICE_USER_ID))
+                                  userKeyPair.public_key, serviceUserId))
       .then(c => {
         // get back recipient_id
         console.log('connection is');
