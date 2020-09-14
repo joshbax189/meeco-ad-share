@@ -3,18 +3,18 @@
   left: 0;
   padding-left: 0;
 }
-#layout.active #menu {
-  left: 150px;
-  width: 150px;
-}
+/* #layout #menu { */
+/*   left: 150px; */
+/*   width: 150px; */
+/* } */
 
-#layout.active .menu-link {
-  left: 150px;
-}
+/* #layout .menu-link { */
+/*   left: 150px; */
+/* } */
 .content {
   margin: 0 auto;
   padding: 0 2em;
-  max-width: 800px;
+  /* max-width: 800px; */
   margin-bottom: 50px;
   line-height: 1.6em;
 }

@@ -1,7 +1,6 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <link rel="stylesheet" href="https://unpkg.com/purecss@1.0.1/build/base-min.css">
     <link rel="stylesheet" href="https://unpkg.com/purecss@2.0.3/build/pure-min.css" integrity="sha384-cg6SkqEOCV1NbJoCu11+bm0NvBRc8IYLRGXkmNrqUBfTjmMYwNKPWBTIKyw9mHNJ" crossorigin="anonymous">
     <link rel="stylesheet" href="./style.css">
   </head>
@@ -10,76 +9,77 @@
 
     <div id="layout">
 
-      <div id="menu">
-        <div class="pure-menu">
-          <a class="pure-menu-heading" href="#">Company</a>
-
-          <ul class="pure-menu-list">
-            <li class="pure-menu-item"><a href="#" class="pure-menu-link">Home</a></li>
-            <li class="pure-menu-item"><a href="#" class="pure-menu-link">About</a></li>
-
-            <li class="pure-menu-item menu-item-divided pure-menu-selected">
-              <a href="#" class="pure-menu-link">Services</a>
-            </li>
-
-            <li class="pure-menu-item"><a href="#" class="pure-menu-link">Contact</a></li>
-          </ul>
-        </div>
-      </div>
-
       <div id="main">
         <div class="header">
           <h1>Publisher.com</h1>
         </div>
 
-        <div class="content">
+        <div class="content pure-g">
 
-          <div id="auth">
-          </div>
-
-          <div>
-            <h3>Content</h3>
-            <p>
-              Some text goes here.</br>
-              Some text goes here.</br>
-              Some text goes here.</br>
-              Some text goes here.</br>
-
-            </p>
-          </div>
-
-          <div id="test-form" class="pure-form pure-form-aligned" data-meeco-template-name="my-test-form" data-meeco-org="my-org">
-            <div class="pure-control-group">
-              <label for="email">Email</label>
-              <input name="email" id="email" type="text">
-              <input type="checkbox">
+          <div class="pure-u-1-5">
+            <div id="auth">
             </div>
-            <div class="pure-control-group">
-              <label for="phone">Phone Number</label>
-              <input name="phone" id="phone" type="tel">
-              <input type="checkbox">
-            </div>
-            <div class="pure-control-group">
-              <label for="dob">Date of Birth</label>
-              <input name="dob" id="dob" type="date">
-              <input type="checkbox">
-            </div>
-            <div class="pure-control-group">
-              <label for="postcode">Postcode</label>
-              <input name="postcode" id="postcode" type="number">
-              <input type="checkbox">
-            </div>
-            <div class="pure-controls">
-              <button id="submit-target" class="pure-button">Share</button>
+            <div class="pure-menu">
+              <span class="pure-menu-heading">Items</span>
+              <ul id="user-items-list" class="pure-menu-list"></ul>
             </div>
           </div>
-          <div id="item-output">
+
+          <div class="pure-u-3-5">
+            <div>
+              <h3>Content</h3>
+              <p>
+                Some text goes here.</br>
+                Some text goes here.</br>
+                Some text goes here.</br>
+                Some text goes here.</br>
+
+              </p>
+            </div>
+
+            <div id="auto-form">
+            </div>
+
+            <div id="test-form" class="pure-form pure-form-aligned" data-meeco-template-name="my-test-form" data-meeco-org="my-org">
+              <div class="pure-control-group">
+                <label for="email">Email</label>
+                <input name="email" id="email" type="text">
+                <input type="checkbox">
+              </div>
+              <div class="pure-control-group">
+                <label for="phone">Phone Number</label>
+                <input name="phone" id="phone" type="tel">
+                <input type="checkbox">
+              </div>
+              <div class="pure-control-group">
+                <label for="dob">Date of Birth</label>
+                <input name="dob" id="dob" type="date">
+                <input type="checkbox">
+              </div>
+              <div class="pure-control-group">
+                <label for="postcode">Postcode</label>
+                <input name="postcode" id="postcode" type="number">
+                <input type="checkbox">
+              </div>
+              <div class="pure-controls">
+                <button id="submit-target" class="pure-button">Share</button>
+              </div>
+            </div>
+            <div id="item-output">
+            </div>
+
+            <div id='ad-target' data-meeco-invite="EiWmtIeoBYGCLADGMugqePojqHQoIzBf56K3bK13ylQ">
+              Buy Now!
+            </div>
           </div>
 
-          <div id='ad-target' data-meeco-invite="33ec92dd-d041-458f-9d51-5ac997682267">
-            Buy Now!
+          <div class="pure-u-1-5">
+            <p> Service Agent View</p>
+            <div class="pure-menu">
+              <span class="pure-menu-heading">Templates</span>
+              <ul id="templates-list" class="pure-menu-list"></ul>
+            </div>
           </div>
-        </div>
       </div>
     </div>
   </body>

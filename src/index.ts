@@ -114,6 +114,45 @@ async function connectHandler(invitationToken: string, api: API): Promise<Connec
     .then(res => res.connection);
 }
 
+function meecoForm(divId: string, formSpec: Record<string, object>) {
+  // TODO add for/name/id to inputs
+  const controls = Object.entries(formSpec).map(([label, fieldSpec]) => {
+    return m('.pure-control-group', [
+      m('label', label),
+      m('input', fieldSpec)
+    ])
+  });
+
+  const component = {
+    view: () => m('form.pure-form.pure-form-aligned', [
+      m('h3', 'Meeco Form'),
+      ...controls,
+      m('.pure-controls', [
+        m('label', 'Expires'),
+        m('input', { type: 'date', value: (new Date()).toLocaleDateString() }),
+        m('button.pure-button', 'Share'),
+        m('button.pure-button', 'Broadcast')
+      ])
+    ])
+  };
+
+  m.mount(document.getElementById(divId), component);
+}
+
+function drawExistingItem(item: Item) {
+  console.log('autofill items');
+  document.getElementById('test-form').insertAdjacentHTML('afterend', '<button>Autofill</button>');
+  m.mount(document.getElementById('item-output'), JSONComponent(item));
+}
+
+function drawTemplates(templates: ItemTemplate[]) {
+  const component = {
+    view: () => templates.map(t => m('li.pure-menu-item', m('a.pure-menu-link', t.label)))
+  }
+  m.mount(document.getElementById('templates-list'), component);
+}
+
+// Entry point
 window.onload = () => {
   document.getElementById('test-form').hidden = true;
 
