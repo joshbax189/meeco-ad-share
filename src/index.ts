@@ -182,9 +182,7 @@ window.onload = () => {
 
     const templateName = 'fake_template';
 
-    App.templates.loadTemplates().then(() => {
-      console.log('creating template');
-      makeFormTemplate('test-form');
+    drawTemplates(App.templates.templates());
 
       let template = App.templates.getTemplateByName(templateName);
 

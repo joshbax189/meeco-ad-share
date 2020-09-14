@@ -78,6 +78,10 @@ export class TemplateSchemaStore {
     return Object.values(this.nameTemplateMap).find(x => x.label == reference);
   }
 
+  templates(): ItemTemplate[] {
+    return Object.values(this.nameTemplateMap);
+  }
+
   async saveUnlessExists(template: ItemTemplateData) {
     if (!this.nameTemplateMap[template.name]) {
       return m.request({
