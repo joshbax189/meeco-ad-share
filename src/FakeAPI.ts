@@ -30,6 +30,22 @@ export const FakeAPI = {
       integration_data: null,
       encrypted_recipient_name: '',
     });
+
+    // old style example
+    // return Promise.resolve({
+    //   "id": "99fb111e-a8cc-43b6-9013-1fc9c25b00a5",
+    //   "email": "fake@gmail.com",
+    //   "message": "hi mom",
+    //   "sent_at": null,
+    //   "invited_user_id": null,
+    //   "token": "Ico8bqU0mqRIpsHeZmYf0pc-HiLYYamSZk7yqPSSCzM",
+    //   "outgoing": true,
+    //   "user_name": "Anonymous User",
+    //   "user_image": null,
+    //   "user_email": "",
+    //   "key_store_keypair_id": "8a3abe43-2c35-4ad4-9075-80a1aef763ba",
+    //   "encrypted_recipient_name": "Aes256Gcm.6xtPqA==.LS0tCml2OiAhYmluYXJ5IHwtCiAgWG9mS2U1WTBodmJPbVlrRAphdDogIWJpbmFyeSB8LQogIGErMi95SXZ2dnBMQytmeVdmYjVWekE9PQphZDogbm9uZQo="
+    // });
   },
   acceptInvite(token: string) {
     return Promise.resolve();
