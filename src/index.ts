@@ -1,11 +1,11 @@
 import * as Meeco from '@meeco/sdk';
-//import { Keypair, KeypairResponse } from '@meeco/keystore-api-sdk';
+import { Keypair } from '@meeco/keystore-api-sdk';
 import { Connection, Item } from '@meeco/vault-api-sdk';
 //import * as cryppo from '@meeco/cryppo';
 import * as m from 'mithril';
 
 import environment from '../environment';
-import { serviceUserAuth, servicePublicKey } from '../serviceUser';
+import { serviceUserAuth } from './serviceUser';
 
 import { TemplateSchemaStore, ItemTemplate } from './TemplateSchemaStore';
 import JSONComponent from './JSONComponent.js';
@@ -97,23 +97,6 @@ function collectSlotData(): Array<any> {
   return fields;
 }
 
-async function connectHandler(invitationToken: string, api: API): Promise<Connection> {
-  const keyPair = await api.getOrCreateKeyPair('dog', AuthData.key_encryption_key.key, AuthData.keystore_access_token);
-
-  // TODO cannot establish a connection...
-  return await Meeco.vaultAPIFactory(environment)(AuthData).ConnectionApi.connectionsPost({
-      public_key: {
-        keypair_external_id: keyPair.external_identifiers[0],
-        public_key: keyPair.public_key,
-      },
-      connection: {
-        encrypted_recipient_name: 'nothing here',
-        invitation_token: invitationToken,
-      },
-    })
-    .then(res => res.connection);
-}
-
 function meecoForm(divId: string, formSpec: Record<string, object>) {
   // TODO add for/name/id to inputs
   const controls = Object.entries(formSpec).map(([label, fieldSpec]) => {
@@ -160,34 +143,52 @@ window.onload = () => {
 
   const api = new API(environment);
 
-  // api.createInvite(serviceUserAuth.vault_access_token, serviceUserAuth.keystore_access_token, 'funny_hat', 'fake-name');
-//   api.createInviteFromKey(serviceUserAuth.vault_access_token, servicePublicKey, 'funny_hat', 'Aes256Gcm.6xtPqA==.LS0tCml2OiAhYmluYXJ5IHwtCiAgWG9mS2U1WTBodmJPbVlrRAphdDogIWJpbmFyeSB8LQogIGErMi95SXZ2dnBMQytmeVdmYjVWekE9PQphZDogbm9uZQo=');
+  // Generate an invite to accompany the form
+  const serviceExtKeyId = 'dog';
+  api.getOrCreateKeyPair(serviceExtKeyId,
+                         Meeco.EncryptionKey.fromSerialized(serviceUserAuth.key_encryption_key).key,
+                         serviceUserAuth.keystore_access_token)
+    .then((keypair: Keypair) =>
+      api.createInviteFromKey(serviceUserAuth.vault_access_token,
+                              keypair.public_key,
+                              keypair.id,
+                              'ThisNameIsTotallyEncrypted'))
+    .then((invite: any) => document.getElementById('ad-target').attributes['data-meeco-invite']=invite.token);
+
+  meecoForm('auto-form', {
+    'cat': { type: 'text', value: 'black'},
+    'phone': { type: 'tel', placeholder: 'mobile', required: true },
+    'last meal': { type: 'date' }
+  });
 
   document.getElementById('ad-target').onclick = () => {
-    alert('I send connect request!');
-    // Get Invite
+
     const inviteToken = document.getElementById('ad-target').attributes.getNamedItem('data-meeco-invite').value;
 
-    // let connection = connectHandler(inviteToken, api).then(c => {
-    //   // get back recipient_id
-    //   console.log('connection is');
-    //   console.log(c);
-    //   return c;
-    // });
+    let userKeyId = 'donkey';
+    api.getOrCreateKeyPair(userKeyId, AuthData.key_encryption_key.key, AuthData.keystore_access_token)
+      .then((userKeyPair: Keypair) =>
+        api.acceptInvite(AuthData.vault_access_token, inviteToken, userKeyPair.id,
+                         userKeyPair.public_key))
+      .then(c => {
+        // get back recipient_id
+        console.log('connection is');
+        console.log(c);
+        return c;
+      });
 
-    // let recipient = connection.user_id;
-    // also some form_id for 'next_steps'
-    // then show form
+    // show form
     document.getElementById('test-form').hidden = false;
 
     const templateName = 'fake_template';
 
     drawTemplates(App.templates.templates());
 
-      let template = App.templates.getTemplateByName(templateName);
-
-      // Items may exist!
-      api.lookupItem(template.id, AuthData.vault_access_token).then(existingItems => {
+    makeFormTemplate(templateName)
+      .then((template: ItemTemplate) =>
+        // Items may exist!
+        api.lookupItem(template.id, AuthData.vault_access_token))
+      .then((existingItems: Item[]) => {
 
         if (existingItems.length > 0) {
           console.log('autofill');
@@ -196,25 +197,19 @@ window.onload = () => {
 
         document.getElementById('submit-target').onclick = e => {
           e.preventDefault();
-          // TODO Create Connect
-          // const service = Meeco.ConnectionService(environment).createConnection({from: _, to: _, options: _});
 
-          api.createItem(templateName, collectSlotData()).then(d => {
+          api.createItem(templateName, collectSlotData(), AuthData.data_encryption_key.key, AuthData.vault_access_token).then(d => {
             console.log(d);
             m.mount(document.getElementById('item-output'), JSONComponent(d));
-          });
-          // Once created -> share with Org/Service
+            return d;
+          })/*.then((item: Item) => {
+            // TODO Create Share
+            const share = FakeAPI.createShare(item.id, connection.receiver_id);
+            console.log('share created');
 
-          // TODO
-          // Get {OrgId/service/Id}.agent_id
-
-          // TODO Create Connect
-
-          // TODO Create Share
-          // TODO Send Invite
+            // TODO callback to notify receiver!
+          })*/
         };
-
       });
-    });
-  };
+  }
 }

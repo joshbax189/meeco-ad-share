@@ -3,6 +3,8 @@ import * as m from 'mithril';
 import * as cryppo from '@meeco/cryppo';
 import * as Meeco from '@meeco/sdk';
 
+const ENCRYPTION = 'Aes256Gcm';   // not sure if cryppo style or this?
+
 export default class API {
   private vaultAPIFactory: Meeco.VaultAPIFactory;
 
@@ -11,6 +13,12 @@ export default class API {
     this.vaultAPIFactory = Meeco.vaultAPIFactory(environment);
   }
 
+  /**
+   * Create a new Keypair with the given KeyId.
+   * @param keyId
+   * @param key_encryption_key
+   * @param keystoreToken
+   */
   async createKeyPair(keyId: string, key_encryption_key: string, keystoreToken: string): Promise<Keypair> {
     console.log('creating a key for connection');
 
@@ -65,28 +73,44 @@ export default class API {
       });
   }
 
+  // TODO this won't work for SANDBOX, which wants keypairId == key.id
   async createInvite(vaultToken: string, keystoreToken: string, keyPairId: string, key_encryption_key: string, encryptedName: string) {
     // for other-user:
     const keyPair = await this.createKeyPair(keyPairId, keystoreToken, key_encryption_key);
 
     console.log('creating invite');
-    return Meeco.vaultAPIFactory(this.environment)(vaultToken)
-      .InvitationApi.invitationsPost({
+    // return Meeco.vaultAPIFactory(this.environment)(vaultToken)
+    //   .InvitationApi.invitationsPost({
+    //     public_key: {
+    //       keypair_external_id: keyPairId,
+    //       public_key: keyPair.public_key,
+    //       encryption_strategy: 'Aes256Gcm',   // not sure if cryppo style or this?
+    //      },
+    //     invitation: {
+    //       encrypted_recipient_name: encryptedName,
+    //     },
+    //   })
+    return m.request({
+      method: 'POST',
+      url: this.environment.vault.url + '/invitations',
+      headers: this.makeAuthHeaders(vaultToken),
+      body: {
         public_key: {
-          keypair_external_id: keyPairId,
           public_key: keyPair.public_key,
-        },
+          // old style -- see app/controllers/api/invitations_controller.rb
+          key_store_id: keyPairId,
+          encryption_strategy: ENCRYPTION
+         },
         invitation: {
           encrypted_recipient_name: encryptedName,
         },
-      })
-      .then(result => {
+      }})
+      .then((result: any) => {
         console.log(result.invitation);
         return result.invitation;
       });
   }
 
-  // TODO this fails for sandbox
   async createInviteFromKey(vaultToken: string, publicKey: string, keyPairId: string, encryptedName: string) {
     console.log('creating invite');
     return m.request({
@@ -96,19 +120,39 @@ export default class API {
       body: {
         public_key: {
           // keypair_external_id: keyPairId,
-          keypair_id: '8a3abe43-2c35-4ad4-9075-80a1aef763ba',
-          encryption_strategy: 'Aes256Gcm',
+          key_store_id: keyPairId,
+          encryption_strategy: ENCRYPTION,
           public_key: publicKey,
         },
         invitation: {
           encrypted_recipient_name: encryptedName,
-          message: 'hi mom',
-          email: 'fake@gmail.com'
+          // message: 'hi mom',
+          // email: 'fake@gmail.com'
         },
       }
     }).then((result: any) => {
       console.log(result.invitation);
       return result.invitation;
+    });
+  }
+
+  async acceptInvite(vaultToken: string, invite: string, keyId: string, publicKey: string) {
+    return m.request({
+      method: 'POST',
+      url: this.environment.vault.url + '/connections',
+      headers: this.makeAuthHeaders(vaultToken),
+      body: {
+        public_key: {
+          encryption_strategy: ENCRYPTION,
+          key_store_id: keyId,
+          public_key: publicKey,
+        },
+        key_store_id: keyId,
+        connection: {
+          invitation_token: invite,
+          encrypted_recipient_name: 'bread_dog'
+        },
+      }
     });
   }
 
