@@ -44,7 +44,9 @@
   color: #888;
 }
 
-
+li.pure-menu-item {
+  height: 2em;
+}
 
 /*
 The `#menu` `<div>` is the parent `<div>` that contains the `.pure-menu` that
