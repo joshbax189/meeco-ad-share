@@ -1,7 +1,6 @@
 import * as Meeco from '@meeco/sdk';
 import { Keypair } from '@meeco/keystore-api-sdk';
-import { Connection, Item } from '@meeco/vault-api-sdk';
-//import * as cryppo from '@meeco/cryppo';
+import { Item } from '@meeco/vault-api-sdk';
 import * as m from 'mithril';
 
 import environment from '../environment';
@@ -9,8 +8,9 @@ import { serviceUserAuth } from './serviceUser';
 
 import { TemplateSchemaStore, ItemTemplate } from './TemplateSchemaStore';
 import JSONComponent from './JSONComponent.js';
+//import MeecoForm from './MeecoForm';
 import API from './API';
-import { FakeAPI } from './FakeAPI';
+//import { FakeAPI } from './FakeAPI';
 
 const USER_AUTH_DATA = 'user_auth_data';
 
@@ -97,31 +97,6 @@ function collectSlotData(): Array<any> {
   return fields;
 }
 
-function meecoForm(divId: string, formSpec: Record<string, object>) {
-  // TODO add for/name/id to inputs
-  const controls = Object.entries(formSpec).map(([label, fieldSpec]) => {
-    return m('.pure-control-group', [
-      m('label', label),
-      m('input', fieldSpec)
-    ])
-  });
-
-  const component = {
-    view: () => m('form.pure-form.pure-form-aligned', [
-      m('h3', 'Meeco Form'),
-      ...controls,
-      m('.pure-controls', [
-        m('label', 'Expires'),
-        m('input', { type: 'date', value: (new Date()).toLocaleDateString() }),
-        m('button.pure-button', 'Share'),
-        m('button.pure-button', 'Broadcast')
-      ])
-    ])
-  };
-
-  m.mount(document.getElementById(divId), component);
-}
-
 function drawExistingItem(item: Item) {
   console.log('autofill items');
   document.getElementById('test-form').insertAdjacentHTML('afterend', '<button>Autofill</button>');
@@ -153,13 +128,10 @@ window.onload = () => {
                               keypair.public_key,
                               keypair.id,
                               'ThisNameIsTotallyEncrypted'))
-    .then((invite: any) => document.getElementById('ad-target').attributes['data-meeco-invite']=invite.token);
-
-  meecoForm('auto-form', {
-    'cat': { type: 'text', value: 'black'},
-    'phone': { type: 'tel', placeholder: 'mobile', required: true },
-    'last meal': { type: 'date' }
-  });
+    .then((invite: any) => {
+      document.getElementById('ad-target').attributes['data-meeco-invite']=invite.token;
+      realInvite = invite.token;
+    });
 
   document.getElementById('ad-target').onclick = () => {
 
