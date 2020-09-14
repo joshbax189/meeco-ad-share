@@ -14,6 +14,8 @@ import API from './API';
 
 const USER_AUTH_DATA = 'user_auth_data';
 
+const SERVICE_USER_ID = 'e8c2adbb-f4eb-4d35-8a01-aefe126f179b';
+
 // Active user's AuthData from SessionStorage.
 let AuthData = JSON.parse(sessionStorage.getItem(USER_AUTH_DATA) || '{}');
 if (AuthData.data_encryption_key) {
@@ -50,11 +52,6 @@ if (AuthData.vault_access_token) {
   App.templates = new TemplateSchemaStore(environment.vault.url, AuthData.vault_access_token, environment.vault.subscription_key);
 }
 
-function makeAuthHeaders(token: string) {
-  return { 'Authorization': 'Bearer ' + token,
-           'Meeco-Subscription-Key': environment.keystore.subscription_key };
-}
-
 function LoginComponent() {
   let secret = "1.xB2dP9.7JXpPj-qocZLf-MjT1XN-ULtA8H-8szT1f-SQz4U1-LifbZ6-ff";
   let pass = '';
@@ -79,6 +76,7 @@ function LoginComponent() {
  * @param formId
  */
 function makeFormTemplate(formId: string): Promise<ItemTemplate> {
+  console.log('creating template: ' + formId);
 
   let fieldNames = [];
   document.querySelectorAll('#' + formId + ' input').forEach((x: any) => fieldNames.push(x.name));
@@ -103,6 +101,22 @@ function drawExistingItem(item: Item) {
   m.mount(document.getElementById('item-output'), JSONComponent(item));
 }
 
+function drawShares(shares: any[]) {
+  const component = {
+    view: () => shares.map(t => m('li.pure-menu-item',
+                                  m('a.pure-menu-link', ['item: ', t.item_id, '/ rec: ', t.recipient_id])))
+  }
+  m.mount(document.getElementById('user-shares-list'), component);
+}
+
+
+function drawItems(items: Item[]) {
+  const component = {
+    view: () => items.map(t => m('li.pure-menu-item', m('a.pure-menu-link', [t.label + ': ', m('i', t.item_template_label)])))
+  }
+  m.mount(document.getElementById('user-items-list'), component);
+}
+
 function drawTemplates(templates: ItemTemplate[]) {
   const component = {
     view: () => templates.map(t => m('li.pure-menu-item', m('a.pure-menu-link', t.label)))
@@ -120,6 +134,7 @@ window.onload = () => {
 
   // Generate an invite to accompany the form
   const serviceExtKeyId = 'dog';
+  let realInvite = '';
   api.getOrCreateKeyPair(serviceExtKeyId,
                          Meeco.EncryptionKey.fromSerialized(serviceUserAuth.key_encryption_key).key,
                          serviceUserAuth.keystore_access_token)
@@ -137,11 +152,12 @@ window.onload = () => {
 
     const inviteToken = document.getElementById('ad-target').attributes.getNamedItem('data-meeco-invite').value;
 
+    // Connections
     let userKeyId = 'donkey';
-    api.getOrCreateKeyPair(userKeyId, AuthData.key_encryption_key.key, AuthData.keystore_access_token)
+    let connection = api.getOrCreateKeyPair(userKeyId, AuthData.key_encryption_key.key, AuthData.keystore_access_token)
       .then((userKeyPair: Keypair) =>
-        api.acceptInvite(AuthData.vault_access_token, inviteToken, userKeyPair.id,
-                         userKeyPair.public_key))
+        api.getOrAcceptConnection(AuthData.vault_access_token, realInvite, userKeyPair.id,
+                                  userKeyPair.public_key, SERVICE_USER_ID))
       .then(c => {
         // get back recipient_id
         console.log('connection is');
@@ -163,24 +179,25 @@ window.onload = () => {
       .then((existingItems: Item[]) => {
 
         if (existingItems.length > 0) {
-          console.log('autofill');
-          document.getElementById('test-form').insertAdjacentHTML('afterend', '<button>Autofill</button>');
+          drawItems(existingItems);
+          // console.log('autofill items');
+          // document.getElementById('test-form').insertAdjacentHTML('afterend', '<button>Autofill</button>');
         }
 
         document.getElementById('submit-target').onclick = e => {
           e.preventDefault();
 
-          api.createItem(templateName, collectSlotData(), AuthData.data_encryption_key.key, AuthData.vault_access_token).then(d => {
-            console.log(d);
-            m.mount(document.getElementById('item-output'), JSONComponent(d));
-            return d;
-          })/*.then((item: Item) => {
-            // TODO Create Share
-            const share = FakeAPI.createShare(item.id, connection.receiver_id);
-            console.log('share created');
+          api.createItem(templateName, collectSlotData(), AuthData.data_encryption_key.key, AuthData.vault_access_token)
+            .then((item: Item) => {
+              connection.then((c: any) => {
+                const share = api.shareItem(AuthData, c.id, item.id, {});
+                console.log('share created');
+                console.log(share);
+              }).then(() =>
+                api.getShares(AuthData.vault_access_token).then(drawShares));
 
-            // TODO callback to notify receiver!
-          })*/
+              // TODO callback to notify receiver!
+            });
         };
       });
   }
