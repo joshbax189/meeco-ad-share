@@ -4,8 +4,11 @@ import * as cryppo from '@meeco/cryppo';
 import * as Meeco from '@meeco/sdk';
 
 export default class API {
+  private vaultAPIFactory: Meeco.VaultAPIFactory;
+
   constructor(private environment: any) {
     // this.environment = environment;
+    this.vaultAPIFactory = Meeco.vaultAPIFactory(environment);
   }
 
   async createKeyPair(keyId: string, key_encryption_key: string, keystoreToken: string): Promise<Keypair> {
@@ -124,21 +127,15 @@ export default class API {
 
   // TODO
   async createItem(templateName: string, itemData: any[], userDEK: string, vault_access_token: string) {
-    const service = new Meeco.ItemService(this.environment);
     let newItemResponse = await Promise.all(itemData.map((slot) => {
-      return service.encryptSlot(slot, userDEK);
-    })).then(slots_attributes =>
-      m.request({
-        method: 'POST',
-        url: this.environment.vault.url + '/items',
-        headers: this.makeAuthHeaders(vault_access_token),
-        body:{
-          template_name: templateName,
-          item: {
-            label: 'Auto label',
-            slots_attributes: slots_attributes
-          }
-        }
+      return this.encryptSlot(slot, userDEK);
+    }))
+      .then(slots_attributes => this.vaultAPIFactory(vault_access_token).ItemApi.itemsPost({
+        template_name: templateName,
+        item: {
+          label: 'Auto Label',
+          slots_attributes,
+        },
       }));
 
     let newItem = newItemResponse.item;
@@ -149,5 +146,22 @@ export default class API {
     return { 'Authorization': 'Bearer ' + token,
              'Meeco-Subscription-Key': this.environment.keystore.subscription_key };
   }
+
+  private async encryptSlot(slot: Meeco.DecryptedSlot, dek: string) {
+    const encrypted: any = {
+      ...slot,
+    };
+    encrypted.encrypted_value = await cryppo
+      .encryptWithKey({
+        strategy: cryppo.CipherStrategy.AES_GCM,
+        key: dek,
+        data: slot.value || '',
+      })
+      .then(result => result.serialized);
+    delete encrypted.value;
+    encrypted.encrypted = true;
+    return encrypted;
+  }
+
 
 }
