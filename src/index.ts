@@ -87,9 +87,9 @@ function makeFormTemplate(formId: string): Promise<ItemTemplate> {
   });
 }
 
-function collectSlotData(): Array<any> {
+function collectSlotData(formId: string): Array<any> {
   let fields = [];
-  document.querySelectorAll('#test-form input').forEach((x: Element) => fields.push({name: x.nodeName, value: x.nodeValue}));
+  document.querySelectorAll('#' + formId + ' input').forEach((x: Element) => fields.push({name: x.nodeName, value: x.nodeValue}));
   return fields;
 }
 
@@ -185,7 +185,7 @@ window.onload = () => {
         document.getElementById('submit-target').onclick = e => {
           e.preventDefault();
 
-          api.createItem(templateName, collectSlotData(), AuthData.data_encryption_key.key, AuthData.vault_access_token)
+          api.createItem(templateName, collectSlotData('test-form'), AuthData.data_encryption_key.key, AuthData.vault_access_token)
             .then((item: Item) => {
               connection.then((c: any) => {
                 const share = api.shareItem(AuthData, c.id, item.id, {});
