@@ -19,6 +19,7 @@ export interface ItemTemplateData {
 export class TemplateSchemaStore {
   private idSlotMap: Record<string, any>;
   private nameTemplateMap: Record<string, ItemTemplate>;
+  public templates: Promise<ItemTemplate[]>;
 
   constructor(private host: string, private accessToken: string, private apiKey?: string) {
     this.host = host;
@@ -26,10 +27,11 @@ export class TemplateSchemaStore {
     this.idSlotMap = {};
     this.nameTemplateMap = {};
     this.apiKey = apiKey;
-    this.loadTemplates().then(() => {
+    this.templates = this.loadTemplates().then(() => {
       //verify arrayTemplate exists
       this.arrayTemplate();
       console.log('templates loaded');
+      return this._templates();
     });
   }
 
@@ -78,7 +80,7 @@ export class TemplateSchemaStore {
     return Object.values(this.nameTemplateMap).find(x => x.label == reference);
   }
 
-  templates(): ItemTemplate[] {
+  private _templates(): ItemTemplate[] {
     return Object.values(this.nameTemplateMap);
   }
 

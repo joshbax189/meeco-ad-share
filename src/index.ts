@@ -146,6 +146,8 @@ window.onload = () => {
       realInvite = invite.token;
     });
 
+  App.templates.templates.then(ts => drawTemplates(ts));
+
   document.getElementById('ad-target').onclick = () => {
 
     const inviteToken = document.getElementById('ad-target').attributes.getNamedItem('data-meeco-invite').value;
@@ -167,8 +169,6 @@ window.onload = () => {
     document.getElementById('test-form').hidden = false;
 
     const templateName = 'fake_template';
-
-    drawTemplates(App.templates.templates());
 
     makeFormTemplate(templateName)
       .then((template: ItemTemplate) =>
