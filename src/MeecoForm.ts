@@ -23,12 +23,10 @@ class ControlComponent {
 
 export default function MeecoForm(formSpec: Record<string, object>) {
   // TODO add for/name/id to inputs
-  const controls = Object.entries(formSpec).map(([label, props]) => m(ControlComponent, {label, props}));
-
   return {
     view: () => m('form.pure-form.pure-form-aligned', [
       m('h3', 'Meeco Form'),
-      ...controls,
+      Object.entries(formSpec).map(([label, props]) => m(ControlComponent, {label, props})),
       m('.pure-controls', [
         m('label', 'Expires'),
         m('input', { type: 'date', /*value: (new Date()).toLocaleDateString()*/ }),

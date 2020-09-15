@@ -9,7 +9,6 @@ export default class API {
   private vaultAPIFactory: Meeco.VaultAPIFactory;
 
   constructor(private environment: any) {
-    // this.environment = environment;
     this.vaultAPIFactory = Meeco.vaultAPIFactory(environment);
   }
 
@@ -137,7 +136,7 @@ export default class API {
   }
 
   // Can't use current SDK because of key_store_id requirement in SANDBOX
-  async acceptInvite(vaultToken: string, invite: string, keyId: string, publicKey: string) {
+  async acceptInvite(vaultToken: string, invite: string, keyId: string, publicKey: string): Promise<any> {
     return m.request({
       method: 'POST',
       url: this.environment.vault.url + '/connections',
@@ -207,7 +206,8 @@ export default class API {
     });
   }
 
-  async getShares(vaultToken: string) {
+  // Note that this will not decrypt the shares
+  async getOutShares(vaultToken: string) {
     return m.request({
       method: 'GET',
       url: this.environment.vault.url + '/shares/outgoing',

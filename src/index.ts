@@ -192,7 +192,7 @@ window.onload = () => {
                 console.log('share created');
                 console.log(share);
               }).then(() =>
-                api.getShares(AuthData.vault_access_token).then(drawShares));
+                api.getOutShares(AuthData.vault_access_token).then(drawShares));
 
               // TODO callback to notify receiver!
             });
