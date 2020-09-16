@@ -48,6 +48,12 @@ li.pure-menu-item {
   height: 2em;
 }
 
+#templates-list {
+  max-height: 29em;
+  overflow-y: scroll;
+  overflow-x: hidden;
+}
+
 /*
 The `#menu` `<div>` is the parent `<div>` that contains the `.pure-menu` that
 appears on the left side of the page.

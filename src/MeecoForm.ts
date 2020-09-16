@@ -21,16 +21,20 @@ class ControlComponent {
   }
 }
 
-export default function MeecoForm(formSpec: Record<string, object>) {
+export default function MeecoForm(formSpec: Record<string, object>,
+                                  id?: string,
+                                  templateName?: string) {
+  const idTag = id ? '#' + id : '';
   // TODO add for/name/id to inputs
   return {
-    view: () => m('form.pure-form.pure-form-aligned', [
+    view: () => m('form' + idTag + '.pure-form.pure-form-aligned',
+                  templateName ? {'data-meeco-template-name': templateName} : null, [
       m('h3', 'Meeco Form'),
       Object.entries(formSpec).map(([label, props]) => m(ControlComponent, {label, props})),
       m('.pure-controls', [
         m('label', 'Expires'),
         m('input', { type: 'date', /*value: (new Date()).toLocaleDateString()*/ }),
-        m('button.pure-button', 'Share'),
+        m('input.pure-button', {type: 'submit', value: 'Share'}),
         m('button.pure-button', 'Broadcast')
       ])
     ])

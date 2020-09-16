@@ -7,8 +7,8 @@ import environment from './environment.js';
 import { serviceUserAuth, serviceUserId, serviceUserKeyId } from './serviceUser';
 
 import { TemplateSchemaStore, ItemTemplate } from './TemplateSchemaStore';
-import JSONComponent from './JSONComponent.js';
-//import MeecoForm from './MeecoForm';
+//import JSONComponent from './JSONComponent.js';
+import MeecoForm from './MeecoForm';
 import API from './API';
 //import { FakeAPI } from './FakeAPI';
 
@@ -73,7 +73,7 @@ function LoginComponent() {
 
 /**
  * Create an ItemTemplate representing the given form.
- * @param formId
+ * @param formId DOM id for the form. It should have attribute data-meeco-template-name.
  */
 function makeFormTemplate(formId: string): Promise<ItemTemplate> {
   let fieldNames = [];
@@ -91,7 +91,7 @@ function makeFormTemplate(formId: string): Promise<ItemTemplate> {
   });
 }
 
-function collectSlotData(formId: string): Array<any> {
+function collectSlotData(formId: string): Array<{name: string, value: string}> {
   let fields = [];
   document.querySelectorAll('#' + formId + ' input').forEach((x: Element) => fields.push({name: x.nodeName, value: x.nodeValue}));
   return fields;
@@ -122,8 +122,20 @@ function drawItems(items: Item[]) {
 }
 
 function drawTemplates(templates: ItemTemplate[]) {
+  const hidden = ['Category', 'Tags', 'Image'];
+  const loadForm = (template: ItemTemplate) => {
+    m.mount(document.getElementById('auto-form'),
+            MeecoForm(template.slots.reduce((acc, slot) => {
+              if (! hidden.includes(slot.label)) {
+                acc[slot.label] = {type: 'text', name: slot.name};
+              }
+              return acc;
+            }, {}), 'test-form', template.name));
+  }
+
   const component = {
-    view: () => templates.map(t => m('li.pure-menu-item', m('a.pure-menu-link', t.label)))
+    view: () => templates.map(t => m('li.pure-menu-item',
+                                     m('a.pure-menu-link', {onclick: () => { loadForm(t) }}, t.label)))
   }
   m.mount(document.getElementById('templates-list'), component);
 }
@@ -144,6 +156,20 @@ async function makeInvite(domId: string) {
     });
 }
 
+async function makeConnection(invite: string) {
+  let userKeyId = 'donkey';
+  return api.getOrCreateKeyPair(userKeyId, AuthData.key_encryption_key.key, AuthData.keystore_access_token)
+    .then((userKeyPair: Keypair) =>
+      api.getOrAcceptConnection(AuthData.vault_access_token, invite, userKeyPair.id,
+                                userKeyPair.public_key, serviceUserId))
+    .then(c => {
+      // get back recipient_id
+      console.log('connection is');
+      console.log(c);
+      return c;
+    });
+}
+
 // Entry point
 window.onload = async () => {
   document.getElementById('test-form').hidden = true;
@@ -155,18 +181,9 @@ window.onload = async () => {
   //Draw templates
   App.templates.templates.then(drawTemplates);
 
-    // Connections
-    let userKeyId = 'donkey';
-    let connection = api.getOrCreateKeyPair(userKeyId, AuthData.key_encryption_key.key, AuthData.keystore_access_token)
-      .then((userKeyPair: Keypair) =>
-        api.getOrAcceptConnection(AuthData.vault_access_token, realInvite, userKeyPair.id,
-                                  userKeyPair.public_key, serviceUserId))
-      .then(c => {
-        // get back recipient_id
-        console.log('connection is');
-        console.log(c);
-        return c;
-      });
+  document.getElementById('ad-target').onclick = () => {
+
+    let connection = makeConnection(realInvite);
 
     // show form
     document.getElementById('test-form').hidden = false;
@@ -176,13 +193,12 @@ window.onload = async () => {
         // Items may exist!
         api.lookupItem(template.id, AuthData.vault_access_token)
           .then((existingItems: Item[]) => {
-
             if (existingItems.length > 0) {
               drawItems(existingItems);
             }
           });
 
-        document.getElementById('submit-target').onclick = e => {
+        document.querySelector('#test-form input[type="submit"]').addEventListener('click', e => {
           e.preventDefault();
 
           api.createItem(template.name, collectSlotData('test-form'),
@@ -197,7 +213,7 @@ window.onload = async () => {
 
               // TODO callback to notify receiver!
             });
-        }; //end submit handler
+        }); //end submit handler
       });
   }
 }
