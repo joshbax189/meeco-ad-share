@@ -54,6 +54,10 @@ li.pure-menu-item {
   overflow-x: hidden;
 }
 
+#lhs-col {
+  overflow-x: hidden;
+}
+
 /*
 The `#menu` `<div>` is the parent `<div>` that contains the `.pure-menu` that
 appears on the left side of the page.

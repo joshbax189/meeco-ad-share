@@ -1,6 +1,6 @@
 import * as Meeco from '@meeco/sdk';
 import { Keypair } from '@meeco/keystore-api-sdk';
-import { Item } from '@meeco/vault-api-sdk';
+import { Item, Connection } from '@meeco/vault-api-sdk';
 import * as m from 'mithril';
 
 import environment from './environment.js';
@@ -131,6 +131,7 @@ function drawTemplates(templates: ItemTemplate[]) {
               }
               return acc;
             }, {}), 'test-form', template.name));
+    document.dispatchEvent(new CustomEvent('template-change', {detail: template}));
   }
 
   const component = {
@@ -170,6 +171,34 @@ async function makeConnection(invite: string) {
     });
 }
 
+function makeAdHandler(connection: Promise<Connection>, template: ItemTemplate) {
+
+  // Items may exist!
+  api.lookupItem(template.id, AuthData.vault_access_token)
+    .then((existingItems: Item[]) => {
+      if (existingItems.length > 0) {
+        drawItems(existingItems);
+      }
+    });
+
+  document.querySelector('#test-form input[type="submit"]').addEventListener('click', e => {
+    e.preventDefault();
+
+    api.createItem(template.name, collectSlotData('test-form'),
+                   AuthData.data_encryption_key.key, AuthData.vault_access_token)
+      .then((item: Item) => {
+        connection.then((c: any) => {
+          const share = api.shareItem(AuthData, c.id, item.id, {});
+          console.log('share created');
+          console.log(share);
+        }).then(() =>
+          api.getOutShares(AuthData.vault_access_token).then(drawShares));
+
+        // TODO callback to notify receiver!
+      });
+  }); //end submit handler
+}
+
 // Entry point
 window.onload = async () => {
   document.getElementById('test-form').hidden = true;
@@ -185,35 +214,16 @@ window.onload = async () => {
 
     let connection = makeConnection(realInvite);
 
+    document.addEventListener('template-change', e => {
+      makeAdHandler(connection, e['detail']);
+    });
+
     // show form
     document.getElementById('test-form').hidden = false;
 
     makeFormTemplate('test-form')
-      .then((template: ItemTemplate) => {
-        // Items may exist!
-        api.lookupItem(template.id, AuthData.vault_access_token)
-          .then((existingItems: Item[]) => {
-            if (existingItems.length > 0) {
-              drawItems(existingItems);
-            }
-          });
+      .then((template: ItemTemplate) => makeAdHandler(connection, template));
 
-        document.querySelector('#test-form input[type="submit"]').addEventListener('click', e => {
-          e.preventDefault();
-
-          api.createItem(template.name, collectSlotData('test-form'),
-                         AuthData.data_encryption_key.key, AuthData.vault_access_token)
-            .then((item: Item) => {
-              connection.then((c: any) => {
-                const share = api.shareItem(AuthData, c.id, item.id, {});
-                console.log('share created');
-                console.log(share);
-              }).then(() =>
-                api.getOutShares(AuthData.vault_access_token).then(drawShares));
-
-              // TODO callback to notify receiver!
-            });
-        }); //end submit handler
-      });
   }
+
 }
