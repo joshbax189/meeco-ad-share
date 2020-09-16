@@ -50,6 +50,8 @@ if (AuthData.vault_access_token) {
   App.templates = new TemplateSchemaStore(environment.vault.url, AuthData.vault_access_token, environment.vault.subscription_key);
 }
 
+const api = new API(environment);
+
 function LoginComponent() {
   let secret = "1.xB2dP9.7JXpPj-qocZLf-MjT1XN-ULtA8H-8szT1f-SQz4U1-LifbZ6-ff";
   let pass = '';
@@ -95,11 +97,13 @@ function collectSlotData(formId: string): Array<any> {
   return fields;
 }
 
+/*
 function drawExistingItem(item: Item) {
   console.log('autofill items');
   document.getElementById('test-form').insertAdjacentHTML('afterend', '<button>Autofill</button>');
   m.mount(document.getElementById('item-output'), JSONComponent(item));
 }
+*/
 
 function drawShares(shares: any[]) {
   const component = {
@@ -124,18 +128,9 @@ function drawTemplates(templates: ItemTemplate[]) {
   m.mount(document.getElementById('templates-list'), component);
 }
 
-// Entry point
-window.onload = () => {
-  document.getElementById('test-form').hidden = true;
-
-  m.mount(document.getElementById('auth'), LoginComponent);
-
-  const api = new API(environment);
-
+async function makeInvite(domId: string) {
   // Generate an invite to accompany the form
-  const serviceExtKeyId = serviceUserKeyId;
-  let realInvite = '';
-  api.getOrCreateKeyPair(serviceExtKeyId,
+  return api.getOrCreateKeyPair(serviceUserKeyId,
                          Meeco.EncryptionKey.fromSerialized(serviceUserAuth.key_encryption_key).key,
                          serviceUserAuth.keystore_access_token)
     .then((keypair: Keypair) =>
@@ -144,15 +139,21 @@ window.onload = () => {
                               keypair.id,
                               'ThisNameIsTotallyEncrypted'))
     .then((invite: any) => {
-      document.getElementById('ad-target').attributes['data-meeco-invite']=invite.token;
-      realInvite = invite.token;
+      document.getElementById(domId).attributes.getNamedItem('data-meeco-invite').value=invite.token;
+      return invite.token;
     });
+}
 
-  App.templates.templates.then(ts => drawTemplates(ts));
+// Entry point
+window.onload = async () => {
+  document.getElementById('test-form').hidden = true;
 
-  document.getElementById('ad-target').onclick = () => {
+  m.mount(document.getElementById('auth'), LoginComponent);
 
-    const inviteToken = document.getElementById('ad-target').attributes.getNamedItem('data-meeco-invite').value;
+  const realInvite = await makeInvite('ad-target');
+
+  //Draw templates
+  App.templates.templates.then(drawTemplates);
 
     // Connections
     let userKeyId = 'donkey';
