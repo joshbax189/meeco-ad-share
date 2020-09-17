@@ -31,6 +31,11 @@ module.exports = {
       //   ],
       // },
       {
+        test: /\.yaml$/,
+        type: 'json',
+        use: 'yaml-ts-loader'
+      },
+      {
         test: /\.tsx?$/,
         use: "ts-loader",
         exclude: /node_modules/,

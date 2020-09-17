@@ -3,7 +3,6 @@ import { Keypair } from '@meeco/keystore-api-sdk';
 import { Item, Connection } from '@meeco/vault-api-sdk';
 import * as m from 'mithril';
 
-import environment from './environment.js';
 import { serviceUserAuth, serviceUserId, serviceUserKeyId } from './serviceUser';
 
 import { TemplateSchemaStore, ItemTemplate } from './TemplateSchemaStore';
@@ -11,7 +10,20 @@ import { TemplateSchemaStore, ItemTemplate } from './TemplateSchemaStore';
 import MeecoForm from './MeecoForm';
 import API from './API';
 //import { FakeAPI } from './FakeAPI';
+import * as ENV from '../environment.yaml';
 
+type env = {
+  vault: {
+    url: string;
+    subscription_key: string;
+  },
+  keystore: {
+    url: string;
+    subscription_key: string;
+  }
+}
+
+const environment= (ENV as unknown) as env;
 const USER_AUTH_DATA = 'user_auth_data';
 
 // Active user's AuthData from SessionStorage.

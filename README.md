@@ -2,15 +2,16 @@
 
 This simulates an ad driven share between a user and an advertiser. The shared data is determined by the inputs of the `test-form` form in `dist/index.html`. The advertiser agent generates a new invite for each new visitor.
 
-
-1. Generate a service user (i.e advertiser agent) via CLI: `meeco users:create -p PASSWORD > file` and copy the credentials to `src/serviceUser.js`.
-2. Get the service user id from `https://sandbox.meeco.me/vault/me` using the generated vault token above.
-2. Generate a user via CLI: `meeco users:create -p PASSWORD > file`. You will use the secret and password to login on the site.
-3. `npm install` in the main directory.
-4. Run dev server with `npm start`, visit http://localhost:1234
-5. Login with user credentials.
-5. Clicking the big red "ad" will show the form. Fill it in and you should see a new share created for the user.
-6. Logging in a second time should re-use the created template and connection.
+1. Set the server and sandbox key (if using) in `environment.yaml`.
+  (Use the same file for the `meeco` CLI commands below).
+2. Generate a service user (i.e advertiser agent) via CLI: `meeco users:create -p PASSWORD > file` and copy the credentials to `src/serviceUser.js`.
+3. Get the service user id from `meeco users:get -s SECRET -p PASSWORD` using the generated secret and password from above. Add the id to `src/serviceUser.js`.
+4. Generate a user via CLI: `meeco users:create -p PASSWORD2 > file`. You will use the secret and password to login on the site.
+5. `npm install` in the main directory.
+6. Run dev server with `npm start`, visit http://localhost:1234
+7. Login with user credentials.
+8. Clicking the big red "ad" will show the form. Fill it in and you should see a new share created for the user.
+9. Logging in a second time should re-use the created template and connection.
 
 # How it Works
 
@@ -24,9 +25,9 @@ The form will also include a function to 'broadcast' the same metadata record, p
 
 # TODO
 
+- Startup scripts
 - Implement "tell me more"
 - Use shares v2
-- Advertiser can ask for existing templates
 - User can add terms/expiry to share
 - User can redact some data in their response
 - Broadcast function to several advertisers
