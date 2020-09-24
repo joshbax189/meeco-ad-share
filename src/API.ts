@@ -1,4 +1,5 @@
 import { Keypair, KeypairResponse } from '@meeco/keystore-api-sdk';
+import { Item, Slot } from '@meeco/vault-api-sdk';
 import * as m from 'mithril';
 import * as cryppo from '@meeco/cryppo';
 import * as Meeco from '@meeco/sdk';
@@ -213,6 +214,19 @@ export default class API {
       url: this.environment.vault.url + '/shares/outgoing',
       headers: this.makeAuthHeaders(vaultToken),
     }).then((data: any) => data.shares);
+  }
+
+  async getInShares(keys: Meeco.AuthData) {
+    const service = new Meeco.ShareService(this.environment);
+
+    function processSharedItem(s: { item: Item, slots: any[] }) {
+      const slotsMap = s.slots.reduce((acc, slot) => { acc[slot.id] = slot; return acc }, {});
+      s.item['slots'] = s.item.slot_ids.map(id => slotsMap[id]);
+      return s.item;
+    }
+
+    return service.listShares(keys).then(sharesResponse =>
+      Promise.all(sharesResponse.shares.map(share => service.getSharedItem(keys, share.id).then(processSharedItem))));
   }
 
   private makeAuthHeaders(token: string) {
