@@ -1,5 +1,5 @@
 import { Keypair, KeypairResponse } from '@meeco/keystore-api-sdk';
-import { Item, Slot } from '@meeco/vault-api-sdk';
+import { InvitationResponse, Invitation } from '@meeco/vault-api-sdk';
 import * as m from 'mithril';
 import * as cryppo from '@meeco/cryppo';
 import * as Meeco from '@meeco/sdk';
@@ -74,63 +74,61 @@ export default class API {
   }
 
   // TODO this won't work for SANDBOX, which wants keypairId == key.id
-  async createInvite(vaultToken: string, keystoreToken: string, keyPairId: string, key_encryption_key: string, encryptedName: string) {
+  async createInvite(vaultToken: string, keystoreToken: string, keyPairId: string, key_encryption_key: string, encryptedName: string): Promise<Invitation> {
     // for other-user:
     const keyPair = await this.createKeyPair(keyPairId, keystoreToken, key_encryption_key);
 
     console.log('creating invite');
-    // return Meeco.vaultAPIFactory(this.environment)(vaultToken)
-    //   .InvitationApi.invitationsPost({
-    //     public_key: {
-    //       keypair_external_id: keyPairId,
-    //       public_key: keyPair.public_key,
-    //       encryption_strategy: 'Aes256Gcm',   // not sure if cryppo style or this?
-    //      },
-    //     invitation: {
-    //       encrypted_recipient_name: encryptedName,
-    //     },
-    //   })
-    return m.request({
-      method: 'POST',
-      url: this.environment.vault.url + '/invitations',
-      headers: this.makeAuthHeaders(vaultToken),
-      body: {
+    return Meeco.vaultAPIFactory(this.environment)(vaultToken)
+      .InvitationApi.invitationsPost({
         public_key: {
+          keypair_external_id: keyPairId,
           public_key: keyPair.public_key,
-          // old style -- see app/controllers/api/invitations_controller.rb
-          key_store_id: keyPairId,
-          encryption_strategy: ENCRYPTION
          },
         invitation: {
           encrypted_recipient_name: encryptedName,
         },
-      }})
+      })
       .then((result: any) => {
         console.log(result.invitation);
         return result.invitation;
       });
   }
 
-  async createInviteFromKey(vaultToken: string, publicKey: string, keyPairId: string, encryptedName: string) {
+  async createInviteFromKey(vaultToken: string, publicKey: string, keyPairId: string, encryptedName: string): Promise<Invitation> {
     console.log('creating invite');
-    return m.request({
-      method: 'POST',
-      url: this.environment.vault.url + '/invitations',
-      headers: this.makeAuthHeaders(vaultToken),
-      body: {
+
+    return Meeco.vaultAPIFactory(this.environment)(vaultToken)
+      .InvitationApi.invitationsPost({
         public_key: {
-          // keypair_external_id: keyPairId,
-          key_store_id: keyPairId,
-          encryption_strategy: ENCRYPTION,
+          keypair_external_id: keyPairId,
           public_key: publicKey,
         },
         invitation: {
           encrypted_recipient_name: encryptedName,
-          // message: 'hi mom',
-          // email: 'fake@gmail.com'
         },
-      }
-    }).then((result: any) => {
+      })
+    // There are extra fields in invitation that are not permitted by the typed API
+    // return m.request({
+    //   method: 'POST',
+    //   url: this.environment.vault.url + '/invitations',
+    //   headers: this.makeAuthHeaders(vaultToken),
+    //   body: {
+    //     public_key: {
+    //       keypair_external_id: keyPairId,
+    //       // key_store_id: keyPairId,
+    //       encryption_strategy: ENCRYPTION,
+    //       public_key: publicKey,
+    //     },
+    //     invitation: {
+    //       encrypted_recipient_name: encryptedName,
+    //       invited_user_id: '68a2cdb3-4a9d-42ac-83e7-d7e4967143a0',
+    //       // email: 'joshbax189@gmail.com',
+    //       message: 'Hi son!',
+    //     },
+    //   }
+    // })
+      .then((result: InvitationResponse) => {
       console.log(result.invitation);
       return result.invitation;
     });
