@@ -89,7 +89,7 @@ function LoginComponent() {
  */
 function makeFormTemplate(formId: string): Promise<ItemTemplate> {
   let fieldNames = [];
-  document.querySelectorAll('#' + formId + ' input').forEach((x: any) => fieldNames.push(x.name));
+  document.querySelectorAll('#' + formId + ' input.meeco-slot').forEach((x: any) => fieldNames.push(x.name));
 
   let templateName = document.getElementById(formId).attributes.getNamedItem('data-meeco-template-name').value;
 
@@ -105,7 +105,7 @@ function makeFormTemplate(formId: string): Promise<ItemTemplate> {
 
 function collectSlotData(formId: string): Array<{name: string, value: string}> {
   let fields = [];
-  document.querySelectorAll('#' + formId + ' input').forEach((x: Element) => fields.push({name: x.nodeName, value: x.nodeValue}));
+  document.querySelectorAll('#' + formId + ' input.meeco-slot').forEach((x: any) => fields.push({name: x.name, value: x.value}));
   return fields;
 }
 

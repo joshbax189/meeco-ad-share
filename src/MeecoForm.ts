@@ -14,7 +14,7 @@ class ControlComponent {
   view() {
     return m('.pure-control-group', [
       m('label', this.label),
-      m('input', { ...this.props, disabled: this.checked }),
+      m('input.meeco-slot', { ...this.props, disabled: this.checked }),
       m('input', { type: 'checkbox', checked: this.checked,
                    onchange: () => this.checked = !this.checked })
     ])
