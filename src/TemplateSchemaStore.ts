@@ -48,7 +48,8 @@ export class TemplateSchemaStore {
   private updateTemplateData(data: any): void {
     this.insertInSlotMap(data.slots);
 
-    data.item_templates.forEach((x: any) => {
+    // Deal with single item respones...
+    (data.item_templates || [ data.item_template ]).forEach((x: any) => {
       this.nameTemplateMap[x.name] = x;
       this.derefTemplateSlots(x);
     });
