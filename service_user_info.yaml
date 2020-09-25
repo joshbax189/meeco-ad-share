@@ -1,0 +1,11 @@
+kind: UserData
+spec:
+  id: null   # fill this in
+  email: ""
+  is_app_logging_enabled: false
+  track_events: true
+  track_usage: true
+  private_dek_external_id: null
+  accepted_terms: false
+  association_ids: []
+  user_type: null

@@ -4,8 +4,8 @@ This simulates an ad driven share between a user and an advertiser. The shared d
 
 1. Set the server and sandbox key (if using) in `environment.yaml`.
   (Use the same file for the `meeco` CLI commands below).
-2. Generate a service user (i.e advertiser agent) via CLI: `meeco users:create -p PASSWORD > file` and copy the credentials to `src/serviceUser.js`.
-3. Get the service user id from `meeco users:get -s SECRET -p PASSWORD` using the generated secret and password from above. Add the id to `src/serviceUser.js`.
+2. Generate a service user (i.e advertiser agent) via CLI: `meeco users:create -p PASSWORD > service_user_auth.yaml`.
+3. Get the service user id from `meeco users:get -p PASSWORD -a service_user_auth.yaml > service_user_info.yaml` using the password from above.
 4. Generate a user via CLI: `meeco users:create -p PASSWORD2 > file`. You will use the secret and password to login on the site.
 5. `npm install` in the main directory.
 6. Run dev server with `npm start`, visit http://localhost:1234

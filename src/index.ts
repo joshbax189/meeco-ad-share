@@ -3,13 +3,13 @@ import { Keypair } from '@meeco/keystore-api-sdk';
 import { Item, Connection } from '@meeco/vault-api-sdk';
 import * as m from 'mithril';
 
-import { serviceUserAuth, serviceUserId, serviceUserKeyId } from './serviceUser';
-
 import { TemplateSchemaStore, ItemTemplate } from './TemplateSchemaStore';
 //import JSONComponent from './JSONComponent.js';
 import MeecoForm from './MeecoForm';
 import API from './API';
 //import { FakeAPI } from './FakeAPI';
+import * as SU from '../service_user_auth.yaml';
+import * as SU_INFO from '../service_user_info.yaml';
 import * as ENV from '../environment.yaml';
 
 type env = {
@@ -24,6 +24,11 @@ type env = {
 }
 
 const environment= (ENV as unknown) as env;
+const serviceUserAuth = (SU as any).metadata;
+const serviceUserId = (SU_INFO as any).spec.id;
+// Arbitrary identifier for a keypair
+const SERVICE_USER_KEY_ID = 'dog';
+
 const USER_AUTH_DATA = 'user_auth_data';
 
 // Active user's AuthData from SessionStorage.
@@ -155,7 +160,7 @@ function drawTemplates(templates: ItemTemplate[]) {
 
 async function makeInvite(domId: string) {
   // Generate an invite to accompany the form
-  return api.getOrCreateKeyPair(serviceUserKeyId,
+  return api.getOrCreateKeyPair(SERVICE_USER_KEY_ID,
                          Meeco.EncryptionKey.fromSerialized(serviceUserAuth.key_encryption_key).key,
                          serviceUserAuth.keystore_access_token)
     .then((keypair: Keypair) =>
