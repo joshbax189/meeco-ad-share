@@ -1,8 +1,8 @@
-import { Keypair, KeypairResponse } from '@meeco/keystore-api-sdk';
-import { InvitationResponse, Invitation } from '@meeco/vault-api-sdk';
-import * as m from 'mithril';
 import * as cryppo from '@meeco/cryppo';
+import { Keypair, KeypairResponse } from '@meeco/keystore-api-sdk';
 import * as Meeco from '@meeco/sdk';
+import { Connection, ConnectionsResponse, Invitation, InvitationResponse, Share } from '@meeco/vault-api-sdk';
+import * as m from 'mithril';
 
 const ENCRYPTION = 'Aes256Gcm';   // not sure if cryppo style or this?
 
@@ -95,8 +95,11 @@ export default class API {
       });
   }
 
-  async createInviteFromKey(vaultToken: string, publicKey: string, keyPairId: string, encryptedName: string): Promise<Invitation> {
+  // Note that keyPairId 'should' be an external_id, but presently it is not checked.
+  async createInviteFromKey(vaultToken: string, publicKey: string, keyPairId: string, name: string): Promise<Invitation> {
     console.log('creating invite');
+    //fake name as it has no use otherwise
+    const encryptedName = 'Aes256Gcm.6xtPqA==.LS0tCml2OiAhYmluYXJ5IHwtCiAgWG9mS2U1WTBodmJPbVlrRAphdDogIWJpbmFyeSB8LQogIGErMi95SXZ2dnBMQytmeVdmYjVWekE9PQphZDogbm9uZQo=';
 
     return Meeco.vaultAPIFactory(this.environment)(vaultToken)
       .InvitationApi.invitationsPost({
@@ -190,19 +193,20 @@ export default class API {
     return service.shareItem(keys, connectionId, itemId, options);
   }
 
-  async getOrAcceptConnection(vaultToken: string, invite: string, keyId: string, publicKey: string, otherUserId: string) {
-    return m.request({
+  async getOrAcceptConnection(vaultToken: string, invite: string, keyId: string, publicKey: string, otherUserId: string): Promise<Connection> {
+    const connectionData: ConnectionsResponse = await m.request({
       method: 'GET',
       url: this.environment.vault.url + '/connections',
       headers: this.makeAuthHeaders(vaultToken),
-    }).then((data: any) => {
-      let conn = data.connections.find(c => c.user_id == otherUserId);
-      if (!conn) {
-        return this.acceptInvite(vaultToken, invite, keyId, publicKey);
-      } else {
-        return conn;
-      }
     });
+
+    let conn = connectionData.connections.find(c => c.the_other_user.id == otherUserId);
+
+    if (!conn) {
+      return this.acceptInvite(vaultToken, invite, keyId, publicKey);
+    } else {
+      return conn;
+    }
   }
 
   // Note that this will not decrypt the shares

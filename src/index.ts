@@ -1,6 +1,6 @@
 import * as Meeco from '@meeco/sdk';
 import { Keypair } from '@meeco/keystore-api-sdk';
-import { Item, Connection } from '@meeco/vault-api-sdk';
+import { Item, Connection, Invitation } from '@meeco/vault-api-sdk';
 import * as m from 'mithril';
 
 import { TemplateSchemaStore, ItemTemplate } from './TemplateSchemaStore';
@@ -192,13 +192,13 @@ async function makeInvite(domId: string) {
                               keypair.public_key,
                               keypair.id,
                               'ThisNameIsTotallyEncrypted'))
-    .then((invite: any) => {
+    .then((invite: Invitation) => {
       document.getElementById(domId).attributes.getNamedItem('data-meeco-invite').value=invite.token;
       return invite.token;
     });
 }
 
-async function makeConnection(invite: string) {
+async function makeConnection(invite: string): Promise<Connection> {
   let userKeyId = 'donkey';
   return api.getOrCreateKeyPair(userKeyId, AuthData.key_encryption_key.key, AuthData.keystore_access_token)
     .then((userKeyPair: Keypair) =>
