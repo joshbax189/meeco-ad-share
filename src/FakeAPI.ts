@@ -1,5 +1,5 @@
 import { Keypair } from '@meeco/keystore-api-sdk';
-import { Invitation, Item, Share } from '@meeco/vault-api-sdk';
+import { Invitation, Item, Share, Connection } from '@meeco/vault-api-sdk';
 
 const FAKE_TOKEN = 'token123';
 const FAKE_PUB_KEY = 'public_key123';
@@ -14,7 +14,7 @@ export const FakeAPI = {
       external_identifiers: [keyId]
     });
   },
-  createInvite(publicKey: string, keyId: string): Promise<Invitation> {
+  createInvite(publicKey: string, keyId: string, encryptedName: string = ''): Promise<Invitation> {
     return Promise.resolve({
       id: '123',
       email: '',
@@ -22,13 +22,13 @@ export const FakeAPI = {
       sent_at: null,
       invited_user_id: '',
       token: FAKE_TOKEN,
-      user_name: '',
+      user_name: 'Anonymous User',
       user_email: '',
       user_image: '',
       outgoing: false,
       keypair_external_id: keyId,
       integration_data: null,
-      encrypted_recipient_name: '',
+      encrypted_recipient_name: encryptedName,
     });
 
     // old style example
@@ -81,7 +81,10 @@ export const FakeAPI = {
       me: false,
       background_color: null,
       share_count: 0,
-      valid_share_count: 0
+      valid_share_count: 0,
+      original_id: '',
+      owner_id: '',
+      share_id: '',
     });
   },
   createShare(itemId: string, receiverId: string): Promise<Share> {
@@ -100,24 +103,40 @@ export const FakeAPI = {
       terms: null,
       tradeable: false,
       distributable: false,
+      owner_id: '',
+      original_id: '',
+      share_id: '',
+      slot_id: '',
+      public_key: '',
+      sharing_mode: '',
+      acceptance_required: '',
+      created_at: new Date('2020-01-01'),
+      keypair_external_id: '',
+      encrypted_dek: '',
     });
   },
-  getShare(): Promise<Share> {
+  connection(keyId: string, publicKey: string, otherUserId: string): Promise<Connection> {
     return Promise.resolve({
-      id: '123',
-      sender_id: '',
-      recipient_id: '',
-      outgoing: false,
-      shareable_type: '',
-      shareable_id: '',
-      item_id: '',
-      encryption_space_id: null,
-      connection_id: '',
-      note: null,
-      expires_at: null,
-      terms: null,
-      tradeable: false,
-      distributable: false,
+      own: {
+        id: '',
+        encrypted_recipient_name: '',
+        integration_data: {},
+        connection_type: '',
+        user_image: '',
+        user_type: '',
+        user_public_key: publicKey,
+        user_keypair_external_id: keyId,
+      },
+      the_other_user: {
+        id: otherUserId,
+        integration_data: {},
+        connection_type: '',
+        user_id: '',
+        user_image: '',
+        user_type: '',
+        user_public_key: '',
+        user_keypair_external_id: '',
+      }
     });
-  }
+  },
 }

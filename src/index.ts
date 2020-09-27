@@ -7,7 +7,7 @@ import { TemplateSchemaStore, ItemTemplate } from './TemplateSchemaStore';
 //import JSONComponent from './JSONComponent.js';
 import MeecoForm from './MeecoForm';
 import API from './API';
-//import { FakeAPI } from './FakeAPI';
+
 import * as SU from '../service_user_auth.yaml';
 import * as SU_INFO from '../service_user_info.yaml';
 import * as ENV from '../environment.yaml';
