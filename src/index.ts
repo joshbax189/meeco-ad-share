@@ -132,8 +132,32 @@ function drawShares(shares: any[]) {
 
 
 function drawItems(items: Item[]) {
+  function fillFields(item: any) {
+    Meeco.ItemService.decryptAllSlots(item.slots, AuthData.data_encryption_key)
+      .then(slots => {
+        let slotMap = {};
+        slots.forEach(x => {
+          slotMap[x.name] = x.value;
+        });
+
+        console.log(slotMap);
+
+        document.querySelectorAll('#test-form input.meeco-slot')
+          .forEach((x: any) => {
+            const newVal = slotMap[x.name];
+            if (newVal) {
+              x.value = newVal
+            }
+          });
+      });
+  }
+
   const component = {
-    view: () => items.map(t => m('li.pure-menu-item', m('a.pure-menu-link', [t.label + ': ', m('i', t.item_template_label)])))
+    view: () => items.map(t =>
+      m('li.pure-menu-item',
+        m('a.pure-menu-link',
+          { onclick: () => { console.log(t); fillFields(t); }},
+          [t.label + ': ', m('i', t.item_template_label)])))
   }
   m.mount(document.getElementById('user-items-list'), component);
 }
