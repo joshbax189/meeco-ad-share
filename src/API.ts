@@ -14,47 +14,32 @@ export default class API {
   }
 
   /**
-   * Create a new Keypair with the given KeyId.
-   * @param keyId
+   * @param keyName The external identifier of the new key.
    * @param key_encryption_key
    * @param keystoreToken
    */
-  async createKeyPair(keyId: string, key_encryption_key: string, keystoreToken: string): Promise<Keypair> {
+  async createKeyPair(keyName: string, key_encryption_key: string, keystoreToken: string): Promise<Keypair> {
     console.log('creating a key for connection');
 
-    const keyPairUn = await cryppo.generateRSAKeyPair();
+    const api = Meeco.keystoreAPIFactory(this.environment)(keystoreToken).KeypairApi;
 
-    return cryppo.encryptWithKey({
+    const keyPairUn = await cryppo.generateRSAKeyPair();
+    const privateKeyEncrypted = await cryppo.encryptWithKey({
       data: keyPairUn.privateKey,
       key: key_encryption_key,
       strategy: cryppo.CipherStrategy.AES_GCM,
-    }).then(privateKeyEncrypted =>
-      // TODO can just use this
-      // const api = Meeco.keystoreAPIFactory(environment)(AuthData).KeypairApi
-      // api.keypairsPost({
-      //   public_key: keyPairUn.publicKey,
-      //   encrypted_serialized_key: privateKeyEncrypted.serialized,
-      //   // API will 500 without
-      //   metadata: {},
-      //   // TODO this is for the v1 sandbox
-      //   external_identifiers: (environment.keystore.subscription_key ? keyId : [keyId]),
-      // })
-      m.request({
-        method: 'POST',
-        url: this.environment.keystore.url + '/keypairs',
-        headers: this.makeAuthHeaders(keystoreToken),
-        body: {
-          public_key: keyPairUn.publicKey,
-          encrypted_serialized_key: privateKeyEncrypted.serialized,
-          // API will 500 without
-          metadata: {},
-          external_identifiers: [keyId],
-        }
-      }))
-      .then((result: KeypairResponse) => {
-        console.log(result.keypair);
-        return result.keypair;
-      });
+    });
+
+    return api.keypairsPost({
+      public_key: keyPairUn.publicKey,
+      encrypted_serialized_key: privateKeyEncrypted.serialized,
+      // API will 500 without
+      metadata: {},
+      external_identifiers: [keyName]
+    }).then((result: KeypairResponse) => {
+      console.log(result.keypair);
+      return result.keypair;
+    });
   }
 
   async getOrCreateKeyPair(keyId: string, key_encryption_key: string, keystore_access_token: string) {
