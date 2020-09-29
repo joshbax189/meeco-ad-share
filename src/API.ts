@@ -5,6 +5,7 @@ import { Connection, ConnectionsResponse, Invitation, InvitationResponse, Share 
 import * as m from 'mithril';
 
 const ENCRYPTION = 'Aes256Gcm';   // not sure if cryppo style or this?
+const MOCK_ENCRYPTED_NAME = 'Aes256Gcm.6xtPqA==.LS0tCml2OiAhYmluYXJ5IHwtCiAgWG9mS2U1WTBodmJPbVlrRAphdDogIWJpbmFyeSB8LQogIGErMi95SXZ2dnBMQytmeVdmYjVWekE9PQphZDogbm9uZQo=';
 
 export default class API {
   private vaultAPIFactory: Meeco.VaultAPIFactory;
@@ -59,7 +60,7 @@ export default class API {
   }
 
   // TODO this won't work for SANDBOX, which wants keypairId == key.id
-  async createInvite(vaultToken: string, keystoreToken: string, keyPairId: string, key_encryption_key: string, encryptedName: string): Promise<Invitation> {
+  async createInvite(vaultToken: string, keystoreToken: string, keyPairId: string, key_encryption_key: string): Promise<Invitation> {
     // for other-user:
     const keyPair = await this.createKeyPair(keyPairId, keystoreToken, key_encryption_key);
 
@@ -71,7 +72,7 @@ export default class API {
           public_key: keyPair.public_key,
          },
         invitation: {
-          encrypted_recipient_name: encryptedName,
+          encrypted_recipient_name: MOCK_ENCRYPTED_NAME,
         },
       })
       .then((result: any) => {
@@ -81,10 +82,8 @@ export default class API {
   }
 
   // Note that keyPairId 'should' be an external_id, but presently it is not checked.
-  async createInviteFromKey(vaultToken: string, publicKey: string, keyPairId: string, name: string): Promise<Invitation> {
+  async createInviteFromKey(vaultToken: string, publicKey: string, keyPairId: string): Promise<Invitation> {
     console.log('creating invite');
-    //fake name as it has no use otherwise
-    const encryptedName = 'Aes256Gcm.6xtPqA==.LS0tCml2OiAhYmluYXJ5IHwtCiAgWG9mS2U1WTBodmJPbVlrRAphdDogIWJpbmFyeSB8LQogIGErMi95SXZ2dnBMQytmeVdmYjVWekE9PQphZDogbm9uZQo=';
 
     return Meeco.vaultAPIFactory(this.environment)(vaultToken)
       .InvitationApi.invitationsPost({
@@ -93,38 +92,51 @@ export default class API {
           public_key: publicKey,
         },
         invitation: {
-          encrypted_recipient_name: encryptedName,
+          encrypted_recipient_name: MOCK_ENCRYPTED_NAME,
         },
       })
-    // There are extra fields in invitation that are not permitted by the typed API
-    // return m.request({
-    //   method: 'POST',
-    //   url: this.environment.vault.url + '/invitations',
-    //   headers: this.makeAuthHeaders(vaultToken),
-    //   body: {
-    //     public_key: {
-    //       keypair_external_id: keyPairId,
-    //       // key_store_id: keyPairId,
-    //       encryption_strategy: ENCRYPTION,
-    //       public_key: publicKey,
-    //     },
-    //     invitation: {
-    //       encrypted_recipient_name: encryptedName,
-    //       invited_user_id: '68a2cdb3-4a9d-42ac-83e7-d7e4967143a0',
-    //       // email: 'joshbax189@gmail.com',
-    //       message: 'Hi son!',
-    //     },
-    //   }
-    // })
+      // There are extra fields in invitation that are not permitted by the typed API
+      // return m.request({
+      //   method: 'POST',
+      //   url: this.environment.vault.url + '/invitations',
+      //   headers: this.makeAuthHeaders(vaultToken),
+      //   body: {
+      //     public_key: {
+      //       keypair_external_id: keyPairId,
+      //       // key_store_id: keyPairId,
+      //       encryption_strategy: ENCRYPTION,
+      //       public_key: publicKey,
+      //     },
+      //     invitation: {
+      //       encrypted_recipient_name: encryptedName,
+      //       invited_user_id: '68a2cdb3-4a9d-42ac-83e7-d7e4967143a0',
+      //       // email: 'joshbax189@gmail.com',
+      //       message: 'Hi son!',
+      //     },
+      //   }
+      // })
       .then((result: InvitationResponse) => {
-      console.log(result.invitation);
-      return result.invitation;
-    });
+        console.log(result.invitation);
+        return result.invitation;
+      });
   }
 
   // Can't use current SDK because of key_store_id requirement in SANDBOX
-  async acceptInvite(vaultToken: string, invite: string, keyId: string, publicKey: string): Promise<any> {
-    return m.request({
+  async acceptInvite(vaultToken: string, invite: string, keyId: string, publicKey: string): Promise<Connection> {
+    return Meeco.vaultAPIFactory(this.environment)(vaultToken)
+      .ConnectionApi.connectionsPost({
+        public_key: {
+          keypair_external_id: keyId,
+          public_key: publicKey
+        },
+        connection: {
+          encrypted_recipient_name: MOCK_ENCRYPTED_NAME,
+          invitation_token: invite,
+        },
+      })
+      .then(res => res.connection);
+
+    /*return m.request({
       method: 'POST',
       url: this.environment.vault.url + '/connections',
       headers: this.makeAuthHeaders(vaultToken),
@@ -140,7 +152,7 @@ export default class API {
           encrypted_recipient_name: 'bread_dog'
         },
       }
-    });
+    });*/
   }
 
   // Does Item Exist? What if multiple?
@@ -185,7 +197,7 @@ export default class API {
       headers: this.makeAuthHeaders(vaultToken),
     });
 
-    let conn = connectionData.connections.find(c => c.the_other_user.id == otherUserId);
+    let conn = connectionData.connections.find(c => c.the_other_user.user_id == otherUserId);
 
     if (!conn) {
       return this.acceptInvite(vaultToken, invite, keyId, publicKey);

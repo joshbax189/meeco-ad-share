@@ -190,8 +190,7 @@ async function makeInvite(domId: string) {
     .then((keypair: Keypair) =>
       api.createInviteFromKey(serviceUserAuth.vault_access_token,
                               keypair.public_key,
-                              keypair.id,
-                              'ThisNameIsTotallyEncrypted'))
+                              keypair.id))
     .then((invite: Invitation) => {
       document.getElementById(domId).attributes.getNamedItem('data-meeco-invite').value=invite.token;
       return invite.token;
