@@ -14,21 +14,21 @@
   "dependencies": {
     "@meeco/cryppo": "^0.6.2",
     "@meeco/keystore-api-sdk": "^0.13.0",
-    "@meeco/sdk": "0.0.13-alpha",
+    "@meeco/sdk": "^1.0.0",
     "mithril": "^2.0.4",
     "webpack-cli": "^3.3.12",
     "yaml-ts-loader": "^1.0.0"
   },
   "devDependencies": {
-    "@types/mithril": "^2.0.3",
+    "@types/mithril": "^2.0.4",
     "@types/source-map": "^0.5.2",
     "dotenv-webpack": "^2.0.0",
     "file-loader": "^6.0.0",
-    "html-webpack-plugin": "^4.3.0",
+    "html-webpack-plugin": "^4.5.0",
     "source-map": "^0.7.3",
-    "ts-loader": "^8.0.3",
+    "ts-loader": "^8.0.4",
     "typescript": "^3.9.7",
-    "webpack": "^4.44.0",
+    "webpack": "^4.44.2",
     "webpack-dev-server": "^3.11.0"
   }
 }
