@@ -1,7 +1,7 @@
 import * as cryppo from '@meeco/cryppo';
 import { Keypair, KeypairResponse } from '@meeco/keystore-api-sdk';
 import * as Meeco from '@meeco/sdk';
-import { Connection, ConnectionsResponse, Invitation, InvitationResponse, Share } from '@meeco/vault-api-sdk';
+import { Connection, ConnectionsResponse, Invitation, InvitationResponse } from '@meeco/vault-api-sdk';
 import * as m from 'mithril';
 
 const ENCRYPTION = 'Aes256Gcm';   // not sure if cryppo style or this?
@@ -214,22 +214,22 @@ export default class API {
   async getOutShares(vaultToken: string) {
     return m.request({
       method: 'GET',
-      url: this.environment.vault.url + '/shares/outgoing',
+      url: this.environment.vault.url + '/outgoing_shares',
       headers: this.makeAuthHeaders(vaultToken),
     }).then((data: any) => data.shares);
   }
 
-  async getInShares(keys: Meeco.AuthData) {
+  async getInShares(keys: Meeco.AuthData): Promise<any[]> {
     const service = new Meeco.ShareService(this.environment);
 
-    function processSharedItem(s: { item: Item, slots: any[] }) {
-      const slotsMap = s.slots.reduce((acc, slot) => { acc[slot.id] = slot; return acc }, {});
-      s.item['slots'] = s.item.slot_ids.map(id => slotsMap[id]);
-      return s.item;
-    }
+    // function processSharedItem(s: { item: Item, slots: any[] }) {
+    //   const slotsMap = s.slots.reduce((acc, slot) => { acc[slot.id] = slot; return acc }, {});
+    //   s.item['slots'] = s.item.slot_ids.map(id => slotsMap[id]);
+    //   return s.item;
+    // }
 
-    return service.listShares(keys).then(sharesResponse =>
-      Promise.all(sharesResponse.shares.map(share => service.getSharedItem(keys, share.id).then(processSharedItem))));
+    return service.listShares(keys, Meeco.ShareType.incoming).then(sharesResponse =>
+      Promise.all(sharesResponse.shares.map(share => service.getSharedItemIncoming(keys, share.id)))); //.then(processSharedItem))));
   }
 
   private makeAuthHeaders(token: string) {

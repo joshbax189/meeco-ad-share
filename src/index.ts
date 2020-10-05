@@ -130,12 +130,14 @@ function drawExistingItem(item: Item) {
 }
 */
 
-function drawShares(shares: any[]) {
-  const component = {
-    view: () => shares.map(t => m('li.pure-menu-item',
-      m('a.pure-menu-link', ['item: ', t.item_id, '/ rec: ', t.recipient_id])))
+function drawShares(targetId: string) {
+  return (shares: any[]) => {
+    const component = {
+      view: () => shares.map(t => m('li.pure-menu-item',
+        m('a.pure-menu-link', ['item: ', t.item_id, '/ rec: ', t.recipient_id])))
+    }
+    m.mount(document.getElementById(targetId), component);
   }
-  m.mount(document.getElementById('user-shares-list'), component);
 }
 
 
@@ -190,6 +192,18 @@ function drawTemplates(templates: ItemTemplate[]) {
   m.mount(document.getElementById('templates-list'), component);
 }
 
+function drawSharedItems(shares: any[]) {
+  const component = {
+    view: () => shares.map(t => m('li.pure-menu-item', [
+      m('span', t.label + ': ' + t.item_template_label),
+      m('ul', t.slots.map(s =>
+        m('li', s.label + '= ' + s.value)
+      ))
+    ]))
+  }
+  m.mount(document.getElementById('service-shares-list'), component);
+}
+
 async function makeInvite(domId: string) {
   // Generate an invite to accompany the form
   return api.getOrCreateKeyPair(SERVICE_USER_KEY_ID,
@@ -235,12 +249,14 @@ function makeAdHandler(connection: Promise<Connection>, template: ItemTemplate) 
     api.createItem(template.name, collectSlotData('test-form'),
       AuthData.data_encryption_key.key, AuthData.vault_access_token)
       .then((item: Item) => {
-        connection.then((c: any) => {
-          const share = api.shareItem(AuthData, c.id, item.id, {});
+        connection.then(async (c: Connection) => {
+          const share = await api.shareItem(AuthData, c.own.id, item.id);
           console.log('share created');
           console.log(share);
-        }).then(() =>
-          api.getOutShares(AuthData.vault_access_token).then(drawShares));
+        }).then(() => {
+          api.getOutShares(AuthData.vault_access_token).then(drawShares('user-shares-list'));
+          api.getInShares(serviceUserAuth).then(drawSharedItems);
+        });
 
         // TODO callback to notify receiver!
       });
