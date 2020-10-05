@@ -45,18 +45,18 @@ export default class API {
 
   async getOrCreateKeyPair(keyId: string, key_encryption_key: string, keystore_access_token: string) {
     return await m.request({
-        method: 'GET',
-        url: this.environment.keystore.url + '/keypairs/external_id/' + keyId,
-        headers: this.makeAuthHeaders(keystore_access_token),
-      }).then((r: KeypairResponse) => {
-        console.log('Got KP response');
-        return r.keypair;
-      }).catch(() => {
-        // TODO check it's really a 404
-        console.log('creating a key for connection');
+      method: 'GET',
+      url: this.environment.keystore.url + '/keypairs/external_id/' + keyId,
+      headers: this.makeAuthHeaders(keystore_access_token),
+    }).then((r: KeypairResponse) => {
+      console.log('Got KP response');
+      return r.keypair;
+    }).catch(() => {
+      // TODO check it's really a 404
+      console.log('creating a key for connection');
 
-        return this.createKeyPair(keyId, key_encryption_key, keystore_access_token);
-      });
+      return this.createKeyPair(keyId, key_encryption_key, keystore_access_token);
+    });
   }
 
   // TODO this won't work for SANDBOX, which wants keypairId == key.id
@@ -70,7 +70,7 @@ export default class API {
         public_key: {
           keypair_external_id: keyPairId,
           public_key: keyPair.public_key,
-         },
+        },
         invitation: {
           encrypted_recipient_name: MOCK_ENCRYPTED_NAME,
         },
@@ -185,9 +185,13 @@ export default class API {
     return newItem;
   }
 
-  async shareItem(keys: Meeco.AuthData, connectionId: string, itemId: string, options?: any) {
+  async shareItem(keys: Meeco.AuthData, connectionId: string, itemId: string) {
     const service = new Meeco.ShareService(this.environment);
-    return service.shareItem(keys, connectionId, itemId, options);
+    const shareOptions = {
+      sharing_mode: "owner",
+      acceptance_required: "acceptance_not_required",
+    }
+    return service.shareItem(keys, connectionId, itemId, shareOptions);
   }
 
   async getOrAcceptConnection(vaultToken: string, invite: string, keyId: string, publicKey: string, otherUserId: string): Promise<Connection> {
@@ -229,8 +233,10 @@ export default class API {
   }
 
   private makeAuthHeaders(token: string) {
-    return { 'Authorization': 'Bearer ' + token,
-             'Meeco-Subscription-Key': this.environment.keystore.subscription_key };
+    return {
+      'Authorization': 'Bearer ' + token,
+      'Meeco-Subscription-Key': this.environment.keystore.subscription_key
+    };
   }
 
   private async encryptSlot(slot: Meeco.DecryptedSlot, dek: string) {
