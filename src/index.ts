@@ -24,19 +24,25 @@ type env = {
 }
 
 const environment = (ENV as unknown) as env;
-const serviceUserAuth = (SU as any).metadata;
+const serviceUserAuth = deserializeAuthData((SU as any).metadata);
 const serviceUserId = (SU_INFO as any).spec.id;
 // Arbitrary identifier for a keypair
 const SERVICE_USER_KEY_ID = 'dog';
 
 const USER_AUTH_DATA = 'user_auth_data';
 
+function deserializeAuthData(serialized: any) {
+  let result = { ...serialized };
+  result.data_encryption_key = Meeco.EncryptionKey.fromSerialized(serialized.data_encryption_key);
+  result.key_encryption_key = Meeco.EncryptionKey.fromSerialized(serialized.key_encryption_key);
+  result.passphrase_derived_key = Meeco.EncryptionKey.fromSerialized(serialized.passphrase_derived_key);
+  return result;
+}
+
 // Active user's AuthData from SessionStorage.
 let AuthData = JSON.parse(sessionStorage.getItem(USER_AUTH_DATA) || '{}');
 if (AuthData.data_encryption_key) {
-  AuthData.data_encryption_key = Meeco.EncryptionKey.fromSerialized(AuthData.data_encryption_key);
-  AuthData.key_encryption_key = Meeco.EncryptionKey.fromSerialized(AuthData.key_encryption_key);
-  AuthData.passphrase_derived_key = Meeco.EncryptionKey.fromSerialized(AuthData.passphrase_derived_key);
+  AuthData = deserializeAuthData(AuthData);
 }
 
 let App = {
@@ -187,7 +193,7 @@ function drawTemplates(templates: ItemTemplate[]) {
 async function makeInvite(domId: string) {
   // Generate an invite to accompany the form
   return api.getOrCreateKeyPair(SERVICE_USER_KEY_ID,
-    Meeco.EncryptionKey.fromSerialized(serviceUserAuth.key_encryption_key).key,
+    serviceUserAuth.key_encryption_key.key,
     serviceUserAuth.keystore_access_token)
     .then((keypair: Keypair) =>
       api.createInviteFromKey(serviceUserAuth.vault_access_token,
