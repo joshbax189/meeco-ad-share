@@ -33,6 +33,7 @@
           <div class="pure-u-3-5">
             <div>
               <h3>Content</h3>
+              <h4 style="background:red">Tags: business, marketing, cloud</h4>
               <p>
  Leverage agile frameworks to provide a robust synopsis for high level overviews. Iterative approaches to corporate strategy foster collaborative thinking to further the overall value proposition. Organically grow the holistic world view of disruptive innovation via workplace diversity and empowerment.
               </p>
@@ -44,40 +45,52 @@ Capitalize on low hanging fruit to identify a ballpark value added activity to b
               </p>
             </div>
 
-            <div id="auto-form">
-            <!-- The input names and types determine the shared data -->
-            <form id="test-form" class="pure-form pure-form-aligned" data-meeco-template-name="my-test-form">
-              <div class="pure-control-group">
-                <label for="email">Email</label>
-                <input name="email" id="email" type="text" class="meeco-slot">
-                <input type="checkbox">
-              </div>
-              <div class="pure-control-group">
-                <label for="phone">Phone Number</label>
-                <input name="phone" id="phone" type="tel" class="meeco-slot">
-                <input type="checkbox">
-              </div>
-              <div class="pure-control-group">
-                <label for="dob">Date of Birth</label>
-                <input name="dob" id="dob" type="date" class="meeco-slot">
-                <input type="checkbox">
-              </div>
-              <div class="pure-control-group">
-                <label for="postcode">Postcode</label>
-                <input name="postcode" id="postcode" type="number" class="meeco-slot">
-                <input type="checkbox">
-              </div>
-              <div class="pure-controls">
-                <input id="submit-target" class="pure-button" type="submit" value="Share">
-              </div>
-            </form>
-            </div>
-
-            <div id="item-output">
-            </div>
-
             <div id='ad-target' data-meeco-invite="">
               Buy Now!
+              <div id="auto-form">
+                <!-- The input names and types determine the shared data -->
+                <form id="test-form" class="pure-form pure-form-aligned" data-meeco-template-name="my-intention">
+                  <div class="pure-control-group">
+                    <label for="brand">Brand</label>
+                    <select name="brand" id="brand" class="meeco-slot">
+                      <option value="bmw">BMW</option>
+                      <option value="peugeot">Peugeot</option>
+                      <option value="lada">Lada</option>
+                    </select>
+                  </div>
+                  <div class="pure-control-group">
+                    <label for="car-type">Type</label>
+                    <select name="car-type" id="car-type" type="select" class="meeco-slot">
+                      <option value="sedan">Sedan</option>
+                      <option value="suv">SUV</option>
+                      <option value="compact">Compact</option>
+                      <option value="hybrid">Hybrid</option>
+                    </select>
+                  </div>
+                  <div class="pure-control-group">
+                    <label for="new-car">New?</label>
+                    <input name="new-car" id="new-car" type="checkbox" class="meeco-slot" checked>
+                  </div>
+                  <div class="pure-control-group">
+                    <label for="postcode">Postcode</label>
+                    <input name="postcode" id="postcode" type="number" class="meeco-slot">
+                  </div>
+                  <div class="pure-control-group">
+                    <label for="buy-asap">Buy ASAP</label>
+                    <input name="buy-asap" id="buy-asap" type="checkbox" class="meeco-slot">
+                    <label for="buy-later">Buy in Next:</label>
+                    <select name="buy-later" id="buy-later" class="meeco-slot">
+                      <option value="days">days</option>
+                      <option value="weeks">weeks</option>
+                      <option value="months">months</option>
+                      <option value="years">years</option>
+                    </select>
+                  </div>
+                  <div class="pure-controls">
+                    <input id="submit-target" class="pure-button" type="submit" value="Share">
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
 

@@ -186,7 +186,9 @@ small screens.
 
 #ad-target {
   background:red;
-  height: 300px;
-  width: 300px;
+  min-height: 300px;
+  min-width: 300px;
+  max-width: 500px;
+  padding: 0.5em;
   margin: auto;
 }
