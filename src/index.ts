@@ -75,16 +75,18 @@ function LoginComponent() {
 
   return {
     view: () =>
-          m('form.pure-form', { onsubmit: (e: any) => {
-              e.preventDefault();
-              App.login(secret, pass);
-          }}, [
-              m('input', { type: "text", placeholder: "secret", value: secret, oninput: (e: any) => secret = e.target.value }),
-              m('input', { type: "password", oninput: (e: any) => pass = e.target.value }),
-              m('button[type="submit"].pure-button', 'Login'),
-              m('button.pure-button', { onclick: () => App.logout() }, 'Logout'),
-              m('input', { type: "text", placeholder: "Token", value: App.authToken, oninput: (e: any) => App.authToken = e.target.value }),
-          ])
+      m('form.pure-form', {
+        onsubmit: (e: any) => {
+          e.preventDefault();
+          App.login(secret, pass);
+        }
+      }, [
+        m('input', { type: "text", placeholder: "secret", value: secret, oninput: (e: any) => secret = e.target.value }),
+        m('input', { type: "password", oninput: (e: any) => pass = e.target.value }),
+        m('button[type="submit"].pure-button', 'Login'),
+        m('button.pure-button', { onclick: () => App.logout() }, 'Logout'),
+        m('input', { type: "text", placeholder: "Token", value: App.authToken, oninput: (e: any) => App.authToken = e.target.value }),
+      ])
   };
 }
 
@@ -166,13 +168,13 @@ function drawTemplates(templates: ItemTemplate[]) {
   const hidden = ['Category', 'Tags', 'Image'];
   const loadForm = (template: ItemTemplate) => {
     m.mount(document.getElementById('auto-form'),
-            MeecoForm(template.slots.reduce((acc, slot) => {
-              if (! hidden.includes(slot.label)) {
-                acc[slot.label] = {type: 'text', name: slot.name};
-              }
-              return acc;
-            }, {}), 'test-form', template.name));
-    document.dispatchEvent(new CustomEvent('template-change', {detail: template}));
+      MeecoForm(template.slots.reduce((acc, slot) => {
+        if (!hidden.includes(slot.label)) {
+          acc[slot.label] = { type: 'text', name: slot.name };
+        }
+        return acc;
+      }, {}), 'test-form', template.name, template.label));
+    document.dispatchEvent(new CustomEvent('template-change', { detail: template }));
   }
 
   const component = {
