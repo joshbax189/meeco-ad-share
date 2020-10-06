@@ -173,15 +173,10 @@ function drawItems(items: Item[]) {
 }
 
 function drawTemplates(templates: ItemTemplate[]) {
-  const hidden = ['Category', 'Tags', 'Image'];
+
   const loadForm = (template: ItemTemplate) => {
     m.mount(document.getElementById('auto-form'),
-      MeecoForm(template.slots.reduce((acc, slot) => {
-        if (!hidden.includes(slot.label)) {
-          acc[slot.label] = { type: 'text', name: slot.name };
-        }
-        return acc;
-      }, {}), 'test-form', template.name, template.label));
+      MeecoForm(template.slots, 'test-form', template.name, template.label));
     document.dispatchEvent(new CustomEvent('template-change', { detail: template }));
   }
 
@@ -189,6 +184,7 @@ function drawTemplates(templates: ItemTemplate[]) {
     view: () => templates.map(t => m('li.pure-menu-item',
       m('a.pure-menu-link', { onclick: () => { loadForm(t) } }, t.label)))
   }
+
   m.mount(document.getElementById('templates-list'), component);
 }
 

@@ -1,4 +1,5 @@
 import * as m from 'mithril';
+import { Slot } from '@meeco/vault-api-sdk';
 
 export const ARRAY_NAME = 'json_array';
 
@@ -7,7 +8,7 @@ export interface ItemTemplate {
   id: string,
   label: string,
   slot_ids: Array<string>,
-  slots: Array<any>
+  slots: Array<Slot>
 }
 
 export interface ItemTemplateData {
@@ -49,7 +50,7 @@ export class TemplateSchemaStore {
     this.insertInSlotMap(data.slots);
 
     // Deal with single item respones...
-    (data.item_templates || [ data.item_template ]).forEach((x: any) => {
+    (data.item_templates || [data.item_template]).forEach((x: any) => {
       this.nameTemplateMap[x.name] = x;
       this.derefTemplateSlots(x);
     });
@@ -59,8 +60,10 @@ export class TemplateSchemaStore {
     return m.request({
       method: 'GET',
       url: this.host + '/item_templates',
-      headers: { 'Authorization': 'Bearer ' + this.accessToken,
-                 'Meeco-Subscription-Key': this.apiKey }
+      headers: {
+        'Authorization': 'Bearer ' + this.accessToken,
+        'Meeco-Subscription-Key': this.apiKey
+      }
     }).then(data => this.updateTemplateData(data)); //needs to bind this
   }
 
@@ -90,8 +93,10 @@ export class TemplateSchemaStore {
       return m.request({
         method: 'POST',
         url: this.host + '/item_templates',
-        headers: { 'Authorization': 'Bearer ' + this.accessToken,
-                 'Meeco-Subscription-Key': this.apiKey },
+        headers: {
+          'Authorization': 'Bearer ' + this.accessToken,
+          'Meeco-Subscription-Key': this.apiKey
+        },
         body: template
       }).then(data => this.updateTemplateData(data))
         .then(() => this.getTemplateByName(template.name));
