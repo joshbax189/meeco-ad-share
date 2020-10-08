@@ -1,11 +1,14 @@
+import { Slot, ClassificationNode } from '@meeco/vault-api-sdk';
 import * as m from 'mithril';
-import { Slot } from '@meeco/vault-api-sdk';
+import { ItemTemplate, TemplateSchemaStore } from './TemplateSchemaStore';
 
 class ControlComponent {
   private slot: Slot;
+  private store: TemplateSchemaStore;
 
   constructor(vnode) {
     this.slot = vnode.attrs.slot;
+    this.store = vnode.attrs.store;
   }
 
   toInput() {
@@ -23,7 +26,8 @@ class ControlComponent {
         return m('input.meeco-slot', { type: 'number', name: this.slot.name });
       case 'classification_node':
         if ((this.slot as any).config.type == 'select') {
-          return m('select.meeco-slot', { name: this.slot.name });
+          let options = this.store.getClassificationsByScheme((this.slot as any).config.classification_scheme_name);
+          return m('select.meeco-slot', { name: this.slot.name }, options.map((cn: ClassificationNode) => m('option', cn.label)));
         }
       default:
         return m('input.meeco-slot', { type: 'text', name: this.slot.name });
@@ -38,21 +42,20 @@ class ControlComponent {
   }
 }
 
-export default function MeecoForm(formSlots: Slot[],
-  id?: string,
-  templateName?: string,
-  templateLabel?: string
+export default function MeecoForm(template: ItemTemplate,
+  store: TemplateSchemaStore,
+  domId?: string
 ) {
-  const idTag = id ? '#' + id : '';
+  const idTag = domId ? '#' + domId : '';
   const hidden = ['Category', 'Image', 'Custom Image'];
 
   // TODO add for/name/id to inputs
   return {
     view: () =>
       m('form' + idTag + '.pure-form.pure-form-aligned',
-        templateName ? { 'data-meeco-template-name': templateName } : null, [
-        m('h3', templateLabel || 'Meeco Form'),
-        formSlots.map((slot: Slot) => !hidden.includes(slot.label) ? m(ControlComponent, { slot }) : null),
+        template.name ? { 'data-meeco-template-name': template.name } : null, [
+        m('h3', template.label || 'Meeco Form'),
+        template.slots.map((slot: Slot) => !hidden.includes(slot.label) ? m(ControlComponent, { slot, store }) : null),
         m('.pure-controls', [
           m('label', 'Expires'),
           m('input', { type: 'date', /*value: (new Date()).toLocaleDateString()*/ }),

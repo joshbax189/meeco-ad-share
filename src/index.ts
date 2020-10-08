@@ -176,7 +176,7 @@ function drawTemplates(templates: ItemTemplate[]) {
 
   const loadForm = (template: ItemTemplate) => {
     m.mount(document.getElementById('auto-form'),
-      MeecoForm(template.slots, 'test-form', template.name, template.label));
+      MeecoForm(template, App.templates, 'test-form'));
     document.dispatchEvent(new CustomEvent('template-change', { detail: template }));
   }
 
