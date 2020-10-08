@@ -1,5 +1,5 @@
 import * as m from 'mithril';
-import { Slot } from '@meeco/vault-api-sdk';
+import { Slot, ClassificationNode } from '@meeco/vault-api-sdk';
 
 export const ARRAY_NAME = 'json_array';
 
@@ -18,14 +18,20 @@ export interface ItemTemplateData {
 }
 
 export class TemplateSchemaStore {
-  private idSlotMap: Record<string, any>;
+  private idSlotMap: Record<string, Slot>;
+  private idClassificationMap: Record<string, any>;
+  private schemeClassificationMap: Record<string, any[]>;
   private nameTemplateMap: Record<string, ItemTemplate>;
+  private classifications: any[];
+
   public templates: Promise<ItemTemplate[]>;
 
   constructor(private host: string, private accessToken: string, private apiKey?: string) {
     this.host = host;
     this.accessToken = accessToken;
     this.idSlotMap = {};
+    this.idClassificationMap = {};
+    this.schemeClassificationMap = {};
     this.nameTemplateMap = {};
     this.apiKey = apiKey;
     this.templates = this.loadTemplates().then(() => {
@@ -34,11 +40,12 @@ export class TemplateSchemaStore {
       console.log('templates loaded');
       return this._templates();
     });
+    this.loadClassifications();
   }
 
-  private insertInSlotMap(slots: Array<any>): void {
-    slots.forEach(x => {
-      this.idSlotMap[x.id] = x;
+  private insertInIdMap(data: Array<any>, map: Record<string, any>): void {
+    data.forEach(x => {
+      map[x.id] = x;
     });
   }
 
@@ -47,7 +54,7 @@ export class TemplateSchemaStore {
   }
 
   private updateTemplateData(data: any): void {
-    this.insertInSlotMap(data.slots);
+    this.insertInIdMap(data.slots, this.idSlotMap);
 
     // Deal with single item respones...
     (data.item_templates || [data.item_template]).forEach((x: any) => {
@@ -67,6 +74,25 @@ export class TemplateSchemaStore {
     }).then(data => this.updateTemplateData(data)); //needs to bind this
   }
 
+  async loadClassifications() {
+    return m.request({
+      method: 'GET',
+      url: this.host + '/classification_nodes',
+      headers: {
+        'Authorization': 'Bearer ' + this.accessToken,
+        'Meeco-Subscription-Key': this.apiKey
+      }
+    }).then((data: any) => {
+      this.insertInIdMap(data.classification_nodes, this.idClassificationMap);
+      this.classifications = data.classification_nodes;
+      this.classifications.forEach(x => {
+        let res = this.schemeClassificationMap[x.scheme] || [];
+        res.push(x);
+        this.schemeClassificationMap[x.scheme] = res;
+      });
+    });
+  }
+
   //get the unique template representing arrays
   arrayTemplate() {
     return this.saveUnlessExists({ name: ARRAY_NAME, label: 'array', slots_attributes: [] });
@@ -82,6 +108,10 @@ export class TemplateSchemaStore {
 
   getTemplateByReference(reference: string): ItemTemplate {
     return Object.values(this.nameTemplateMap).find(x => x.label == reference);
+  }
+
+  getClassificationsByScheme(scheme: string): ClassificationNode[] {
+    return this.schemeClassificationMap[scheme] || [];
   }
 
   private _templates(): ItemTemplate[] {
