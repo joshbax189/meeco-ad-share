@@ -270,20 +270,25 @@ window.onload = async () => {
   //Draw templates
   App.templates.templates.then(drawTemplates);
 
+  let connection: Promise<Connection>;
+
   document.getElementById('ad-target').onclick = () => {
 
-    let connection = makeConnection(realInvite);
+    if (!connection) {
+      connection = makeConnection(realInvite);
 
-    document.addEventListener('template-change', e => {
-      makeAdHandler(connection, e['detail']);
-    });
+      document.addEventListener('template-change', e => {
+        makeAdHandler(connection, e['detail']);
+      });
 
-    // show form
-    document.getElementById('test-form').hidden = false;
+      // show form
+      document.getElementById('test-form').hidden = false;
 
-    makeFormTemplate('test-form')
-      .then((template: ItemTemplate) => makeAdHandler(connection, template));
-
+      makeFormTemplate('test-form')
+        .then((template: ItemTemplate) => makeAdHandler(connection, template));
+    } else {
+      console.log('connection exists');
+    }
   }
 
 }
