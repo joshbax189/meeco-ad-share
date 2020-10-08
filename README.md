@@ -2,6 +2,8 @@
 
 This simulates an ad driven share between a user and an advertiser. The shared data is determined by the inputs of the `test-form` form in `dist/index.html`. The advertiser agent generates a new invite for each new visitor.
 
+## Manual Install
+
 1. Set the server and sandbox key (if using) in `environment.yaml`.
   (Use the same file for the `meeco` CLI commands below).
 2. Generate a service user (i.e advertiser agent) via CLI: `meeco users:create -p PASSWORD > service_user_auth.yaml`.
@@ -10,6 +12,18 @@ This simulates an ad driven share between a user and an advertiser. The shared d
 5. `npm install` in the main directory.
 6. Run dev server with `npm start`, visit http://localhost:1234
 7. Login with user credentials.
+8. Clicking the big red "ad" will show the form. Fill it in and you should see a new share created for the user.
+9. Logging in a second time should re-use the created template and connection.
+
+## Install with Script
+
+1. Set the server and sandbox key (if using) in `environment.yaml`.
+2. If Meeco CLI is not globally installed, set the CLI repo path in `init.sh`
+3. Customize passwords in `init.sh` if desired.
+4. Run `init.sh`, this creates all necessary users.
+5. `npm install` in the main directory.
+6. Run dev server with `npm start`, visit http://localhost:1234
+7. Login with user credentials set in `init.sh`
 8. Clicking the big red "ad" will show the form. Fill it in and you should see a new share created for the user.
 9. Logging in a second time should re-use the created template and connection.
 
@@ -25,9 +39,6 @@ The form will also include a function to 'broadcast' the same metadata record, p
 
 # TODO
 
-- Startup scripts
 - Implement "tell me more"
-- Use shares v2
 - User can add terms/expiry to share
-- User can redact some data in their response
 - Broadcast function to several advertisers
