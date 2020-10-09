@@ -10,10 +10,7 @@ This simulates an ad driven share between a user and an advertiser. The shared d
 3. Get the service user id from `meeco users:get -p PASSWORD -a service_user_auth.yaml > service_user_info.yaml` using the password from above.
 4. Generate a user via CLI: `meeco users:create -p PASSWORD2 > file`. You will use the secret and password to login on the site.
 5. `npm install` in the main directory.
-6. Run dev server with `npm start`, visit http://localhost:1234
-7. Login with user credentials.
-8. Clicking the big red "ad" will show the form. Fill it in and you should see a new share created for the user.
-9. Logging in a second time should re-use the created template and connection.
+6. Run `npm run build` (just the first time, otherwise just use `npm start`).
 
 ## Install with Script
 
@@ -22,10 +19,15 @@ This simulates an ad driven share between a user and an advertiser. The shared d
 3. Customize passwords in `init.sh` if desired.
 4. Run `init.sh`, this creates all necessary users.
 5. `npm install` in the main directory.
-6. Run dev server with `npm start`, visit http://localhost:1234
-7. Login with user credentials set in `init.sh`
-8. Clicking the big red "ad" will show the form. Fill it in and you should see a new share created for the user.
-9. Logging in a second time should re-use the created template and connection.
+6. Run `npm run build` (just the first time, otherwise just use `npm start`).
+
+## Running
+This applies to both steps
+
+7. Run dev server with `npm start`, visit http://localhost:1234
+8. Login with user credentials set in `init.sh`, you should see the vault token appear.
+9. Clicking the big red "ad" will show the form. Fill it in and you should see a new share created for the user.
+10. Logging in a second time should re-use the created template and connection.
 
 # How it Works
 
