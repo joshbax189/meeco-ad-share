@@ -2,7 +2,6 @@ import API from './API';
 import MeecoForm from './MeecoForm';
 import { ItemTemplate, TemplateSchemaStore } from './TemplateSchemaStore';
 
-
 import { Keypair } from '@meeco/keystore-api-sdk';
 import * as Meeco from '@meeco/sdk';
 import { Connection, Invitation, Item } from '@meeco/vault-api-sdk';
@@ -12,18 +11,7 @@ import * as SU from '../service_user_auth.yaml';
 import * as SU_INFO from '../service_user_info.yaml';
 import * as UA from '../user_auth.yaml';
 
-type env = {
-  vault: {
-    url: string;
-    subscription_key: string;
-  },
-  keystore: {
-    url: string;
-    subscription_key: string;
-  }
-}
-
-const environment = (ENV as unknown) as env;
+const environment = (ENV as unknown) as Meeco.Environment;
 const serviceUserAuth = deserializeAuthData((SU as any).metadata);
 const serviceUserId = (SU_INFO as any).spec.id;
 // Arbitrary identifier for a keypair
@@ -31,7 +19,7 @@ const SERVICE_USER_KEY_ID = 'dog';
 
 const USER_AUTH_DATA = 'user_auth_data';
 
-function deserializeAuthData(serialized: any) {
+function deserializeAuthData(serialized: any): Meeco.AuthData {
   let result = { ...serialized };
   result.data_encryption_key = Meeco.EncryptionKey.fromSerialized(serialized.data_encryption_key);
   result.key_encryption_key = Meeco.EncryptionKey.fromSerialized(serialized.key_encryption_key);
