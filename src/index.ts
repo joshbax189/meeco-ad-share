@@ -163,23 +163,19 @@ function collectSlotData(formId: string): Array<{ name: string, value: string }>
 }
 
 /*
-function drawExistingItem(item: Item) {
-  console.log('autofill items');
-  document.getElementById('test-form').insertAdjacentHTML('afterend', '<button>Autofill</button>');
-  m.mount(document.getElementById('item-output'), JSONComponent(item));
-}
-*/
+   function drawExistingItem(item: Item) {
+   console.log('autofill items');
+   document.getElementById('test-form').insertAdjacentHTML('afterend', '<button>Autofill</button>');
+   m.mount(document.getElementById('item-output'), JSONComponent(item));
+   }
+ */
 
-function drawShares(targetId: string) {
-  return (shares: any[]) => {
-    const component = {
-      view: () => shares.map(t => m('li.pure-menu-item',
-        m('a.pure-menu-link', ['item: ', t.item_id, '/ rec: ', t.recipient_id])))
-    }
-    m.mount(document.getElementById(targetId), component);
-  }
+function OutgoingSharesMenuComponent(shares: any[]) {
+  return {
+    view: () => shares.map(t => m('li.pure-menu-item',
+                                  m('a.pure-menu-link', ['item: ', t.item_id, '/ rec: ', t.recipient_id])))
+  };
 }
-
 
 function drawItems(items: Item[]) {
   function fillFields(item: any) {
@@ -212,25 +208,26 @@ function drawItems(items: Item[]) {
   m.mount(document.getElementById('user-items-list'), component);
 }
 
-function drawTemplates(templates: ItemTemplate[]) {
+function TemplatesMenuComponent(templates: ItemTemplate[]) {
 
   const loadForm = (template: ItemTemplate) => {
+    console.log(`template ${template.name}`);
+    console.log(template);
     m.mount(document.getElementById('auto-form'),
       MeecoForm(template, App.templates, 'test-form'));
     document.dispatchEvent(new CustomEvent('template-change', { detail: template }));
   }
 
-  const component = {
+  return {
     view: () => templates.map(t => m('li.pure-menu-item',
       m('a.pure-menu-link', { onclick: () => { loadForm(t) } }, t.label)))
-  }
-
-  m.mount(document.getElementById('templates-list'), component);
+  };
 }
 
 function drawSharedItems(shares: any[]) {
   const component = {
-    view: () => shares.map(t => m('li.pure-menu-item', [
+    // TODO for now just draw the first share
+    view: () => [shares[0]].map(t => m('li.pure-menu-item', [
       m('span', t.label + ': ' + t.item_template_label),
       m('ul', t.slots.map(s =>
         m('li', s.label + '= ' + s.value)
@@ -240,19 +237,16 @@ function drawSharedItems(shares: any[]) {
   m.mount(document.getElementById('service-shares-list'), component);
 }
 
-async function makeInvite(domId: string) {
-  // Generate an invite to accompany the form
-  return api.getOrCreateKeyPair(SERVICE_USER_KEY_ID,
-    serviceUserAuth.key_encryption_key.key,
-    serviceUserAuth.keystore_access_token)
-    .then((keypair: Keypair) =>
-      api.createInviteFromKey(serviceUserAuth.vault_access_token,
-        keypair.public_key,
-        keypair.id))
-    .then((invite: Invitation) => {
-      document.getElementById(domId).attributes.getNamedItem('data-meeco-invite').value = invite.token;
-      return invite.token;
-    });
+/** Generate an invite to accompany the form */
+async function makeInvite(): Promise<string> {
+  const keypair: Keypair = await api.getOrCreateKeyPair(SERVICE_USER_KEY_ID,
+                                                        serviceUserAuth.key_encryption_key.key,
+                                                        serviceUserAuth.keystore_access_token);
+
+  return api.createInviteFromKey(serviceUserAuth.vault_access_token,
+                                 keypair.public_key,
+                                 keypair.id)
+    .then((invite: Invitation) => invite.token);
 }
 
 async function makeConnection(invite: string): Promise<Connection> {
@@ -272,10 +266,13 @@ async function makeConnection(invite: string): Promise<Connection> {
 function makeAdHandler(connection: Promise<Connection>, template: ItemTemplate) {
 
   // Items may exist!
+  console.log('finding items for ' + template.name);
   api.lookupItem(template.id, AuthData.vault_access_token)
     .then((existingItems: Item[]) => {
       if (existingItems.length > 0) {
         drawItems(existingItems);
+      } else {
+        console.log('no items');
       }
     });
 
@@ -290,7 +287,11 @@ function makeAdHandler(connection: Promise<Connection>, template: ItemTemplate) 
           console.log('share created');
           console.log(share);
         }).then(() => {
-          api.getOutShares(AuthData.vault_access_token).then(drawShares('user-shares-list'));
+          api.getOutShares(AuthData.vault_access_token)
+          .then(outShares => {
+            m.mount(document.getElementById('user-shares-list'), OutgoingSharesMenuComponent(outShares));
+          });
+
           api.getInShares(serviceUserAuth).then(drawSharedItems);
         });
 
@@ -305,10 +306,16 @@ window.onload = async () => {
 
   m.mount(document.getElementById('auth'), LoginComponent);
 
-  const realInvite = await makeInvite('ad-target');
+  const realInvite = await makeInvite();
+  // write the invite in a form attribute
+  const adDiv = document.getElementById('ad-target');
+  adDiv.attributes.getNamedItem('data-meeco-invite').value = realInvite;
+  adDiv.append('invite: ' + realInvite);
 
   //Draw templates
-  App.templates.templates.then(drawTemplates);
+  App.templates.templates.then((templates: ItemTemplate[]) => {
+    m.mount(document.getElementById('templates-list'), TemplatesMenuComponent(templates));
+  });
 
   let connection: Promise<Connection>;
 
@@ -325,7 +332,7 @@ window.onload = async () => {
       document.getElementById('test-form').hidden = false;
 
       makeFormTemplate('test-form')
-        .then((template: ItemTemplate) => makeAdHandler(connection, template));
+      .then((template: ItemTemplate) => makeAdHandler(connection, template));
     } else {
       console.log('connection exists');
     }
