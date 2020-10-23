@@ -63,6 +63,17 @@ export class TemplateSchemaStore {
     });
   }
 
+  private updateClassificationNodes(data: any): void {
+    const nodes = data.classification_nodes || [data.classification_node];
+    this.insertInIdMap(nodes, this.idClassificationMap);
+    this.classifications = Object.values(this.idClassificationMap);
+    this.classifications.forEach(x => {
+      let res = this.schemeClassificationMap[x.scheme] || [];
+      res.push(x);
+      this.schemeClassificationMap[x.scheme] = res;
+    });
+  }
+
   async loadTemplates(): Promise<void> {
     return m.request({
       method: 'GET',
@@ -82,15 +93,7 @@ export class TemplateSchemaStore {
         'Authorization': 'Bearer ' + this.accessToken,
         'Meeco-Subscription-Key': this.apiKey
       }
-    }).then((data: any) => {
-      this.insertInIdMap(data.classification_nodes, this.idClassificationMap);
-      this.classifications = data.classification_nodes;
-      this.classifications.forEach(x => {
-        let res = this.schemeClassificationMap[x.scheme] || [];
-        res.push(x);
-        this.schemeClassificationMap[x.scheme] = res;
-      });
-    });
+    }).then(data => this.updateClassificationNodes(data));
   }
 
   //get the unique template representing arrays
@@ -133,5 +136,36 @@ export class TemplateSchemaStore {
     } else {
       return this.getTemplateByName(template.name);
     }
+  }
+
+  async saveTag(name: string, label: string, description?: string) {
+    const existing = (this.schemeClassificationMap['tag'] || []).find(x => x.label === label);
+
+    if (!existing) {
+      const newTag = {
+        classification_node: {
+          classification_scheme_name: 'tag',
+          name,
+          label,
+          description,
+        }
+      };
+
+      return m.request({
+        method: 'POST',
+        url: this.host + '/classification_nodes',
+        headers: {
+          'Authorization': 'Bearer ' + this.accessToken,
+          'Meeco-Subscription-Key': this.apiKey
+        },
+        body: newTag
+      }).then(data => {
+        this.updateClassificationNodes(data);
+        return (data as any).classification_node;
+      });
+    } else {
+      return existing;
+    }
+
   }
 }
