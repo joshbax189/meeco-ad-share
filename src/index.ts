@@ -28,10 +28,14 @@ function deserializeAuthData(serialized: any): Meeco.AuthData {
 }
 
 // Active user's AuthData from SessionStorage.
-let AuthData = JSON.parse(sessionStorage.getItem(USER_AUTH_DATA) || '{}');
+let AuthData = JSON.parse(sessionStorage.getItem(USER_AUTH_DATA)) || (UA as any).metadata || '{}';
+
 if (AuthData.data_encryption_key) {
   AuthData = deserializeAuthData(AuthData);
 }
+
+console.log(`Stored user auth:`);
+console.log(AuthData);
 
 let App = {
   authToken: AuthData.vault_access_token,
@@ -64,7 +68,7 @@ if (AuthData.vault_access_token) {
 const api = new API(environment);
 
 function LoginComponent() {
-  let secret = (UA as any).metadata.secret;
+  let secret = AuthData.secret;
   let pass = '';
 
   return {
