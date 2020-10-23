@@ -26,12 +26,36 @@ class ControlComponent {
         return m('input.meeco-slot', { type: 'number', name: this.slot.name });
       case 'classification_node':
         // Note that config is not included in the Slot type
-        const slotConfig = (this.slot as any).config;
+        let slotConfig = (this.slot as any).config;
+        let special = false;
+        // attempt to parse hacked slot
+        if (!slotConfig && this.slot.description) {
+          try {
+            slotConfig = JSON.parse(this.slot.description);
+            special = true;
+          } catch (e) {
+            if (e instanceof SyntaxError) {
+              console.log('missing config object on class_node slot');
+            } else {
+              throw e;
+            }
+          }
+        }
+
         // default select menu
         if (slotConfig.type == 'select') {
           let options = this.store.getClassificationsByScheme(slotConfig.classification_scheme_name);
+          if (special) {
+            options = options.filter(o => o.name.startsWith(slotConfig.special_prefix));
+          }
           return m('select.meeco-slot',
                    { name: this.slot.name, disabled: options.length == 0 },
+                   options.map((cn: ClassificationNode) => m('option', cn.label)));
+          // special case for tags
+        } else if (slotConfig.selection_type == 'multiple') {
+          let options = this.store.getClassificationsByScheme(slotConfig.classification_scheme_name);
+          return m('select.meeco-slot',
+                   { name: this.slot.name, multiple: true, disabled: options.length == 0 },
                    options.map((cn: ClassificationNode) => m('option', cn.label)));
         }
       default:
