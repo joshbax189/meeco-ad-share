@@ -25,9 +25,14 @@ class ControlComponent {
       case 'phone_number':
         return m('input.meeco-slot', { type: 'number', name: this.slot.name });
       case 'classification_node':
-        if ((this.slot as any).config.type == 'select') {
-          let options = this.store.getClassificationsByScheme((this.slot as any).config.classification_scheme_name);
-          return m('select.meeco-slot', { name: this.slot.name }, options.map((cn: ClassificationNode) => m('option', cn.label)));
+        // Note that config is not included in the Slot type
+        const slotConfig = (this.slot as any).config;
+        // default select menu
+        if (slotConfig.type == 'select') {
+          let options = this.store.getClassificationsByScheme(slotConfig.classification_scheme_name);
+          return m('select.meeco-slot',
+                   { name: this.slot.name, disabled: options.length == 0 },
+                   options.map((cn: ClassificationNode) => m('option', cn.label)));
         }
       default:
         return m('input.meeco-slot', { type: 'text', name: this.slot.name });
@@ -47,7 +52,7 @@ export default function MeecoForm(template: ItemTemplate,
   domId?: string
 ) {
   const idTag = domId ? '#' + domId : '';
-  const hidden = ['Category', 'Image', 'Custom Image'];
+  const hidden = ['Image', 'Custom Image'];
 
   // TODO add for/name/id to inputs
   return {
