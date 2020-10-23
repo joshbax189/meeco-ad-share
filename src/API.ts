@@ -162,8 +162,16 @@ export default class API {
       url: this.environment.vault.url + '/items?template_ids=' + templateId,
       headers: this.makeAuthHeaders(vault_access_token),
     }).then((data: any) => {
-      console.log('found items');
-      console.log(data.items);
+      let slotMap = {};
+
+      data.slots.forEach(x => {
+        slotMap[x.id] = x;
+      });
+
+      data.items.forEach(i => {
+        i.slots = i.slot_ids.map(y => slotMap[y]);
+      });
+
       return data.items;
     });
   }
